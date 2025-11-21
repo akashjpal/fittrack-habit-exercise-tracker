@@ -138,7 +138,7 @@ export default function Progress() {
               <ProgressChart
                 key={exercise.key}
                 data={data.volumeData}
-                type="line"
+                type="bar"
                 title={exercise.label}
                 dataKeys={[
                   { key: exercise.key, color: exercise.color, label: exercise.label },
