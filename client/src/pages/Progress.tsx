@@ -1,40 +1,93 @@
+import { useQuery } from "@tanstack/react-query";
 import ProgressChart from "@/components/ProgressChart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, Target, Calendar } from "lucide-react";
 
+interface ProgressData {
+  volumeData: Array<{
+    week: string;
+    total: number;
+    [key: string]: string | number;
+  }>;
+}
+
 export default function Progress() {
-  const volumeData = [
-    { week: 'Week 1', total: 30, chest: 10, back: 12, legs: 8 },
-    { week: 'Week 2', total: 35, chest: 12, back: 13, legs: 10 },
-    { week: 'Week 3', total: 42, chest: 14, back: 15, legs: 13 },
-    { week: 'Week 4', total: 38, chest: 11, back: 14, legs: 13 },
-    { week: 'Week 5', total: 45, chest: 15, back: 16, legs: 14 },
-    { week: 'Week 6', total: 48, chest: 16, back: 17, legs: 15 },
-  ];
+  const { data, isLoading } = useQuery<ProgressData>({
+    queryKey: ["/api/analytics/progress"],
+  });
+
+  if (isLoading) {
+    return (
+      <div className="space-y-8" data-testid="page-progress">
+        <div>
+          <h1 className="text-4xl font-bold mb-2">Progress Analytics</h1>
+          <p className="text-muted-foreground">Visualize your training trends and achievements</p>
+        </div>
+        <div className="text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!data || !data.volumeData || data.volumeData.length === 0) {
+    return (
+      <div className="space-y-8" data-testid="page-progress">
+        <div>
+          <h1 className="text-4xl font-bold mb-2">Progress Analytics</h1>
+          <p className="text-muted-foreground">Visualize your training trends and achievements</p>
+        </div>
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">No workout data yet. Start logging workouts to see your progress!</p>
+        </div>
+      </div>
+    );
+  }
+
+  const currentWeek = data.volumeData[data.volumeData.length - 1];
+  const previousWeek = data.volumeData[data.volumeData.length - 2];
+  
+  const weeklyChange = previousWeek 
+    ? Math.round(((currentWeek.total as number - (previousWeek.total as number)) / (previousWeek.total as number)) * 100)
+    : 0;
+
+  const avgSetsPerDay = currentWeek ? ((currentWeek.total as number) / 7).toFixed(1) : "0";
+
+  const trendDirection = data.volumeData.length >= 3
+    ? (data.volumeData[data.volumeData.length - 1].total as number) > (data.volumeData[data.volumeData.length - 3].total as number)
+      ? "Increasing"
+      : "Stable"
+    : "Stable";
 
   const stats = [
     {
       label: "Total Sets This Week",
-      value: "48",
+      value: currentWeek?.total?.toString() || "0",
       icon: Target,
-      change: "+12% from last week",
-      positive: true,
+      change: weeklyChange > 0 ? `+${weeklyChange}% from last week` : weeklyChange < 0 ? `${weeklyChange}% from last week` : "Same as last week",
+      positive: weeklyChange >= 0,
     },
     {
       label: "Average Sets/Day",
-      value: "6.9",
+      value: avgSetsPerDay,
       icon: Calendar,
-      change: "+8% from last week",
+      change: "Based on this week",
       positive: true,
     },
     {
       label: "Current Trend",
-      value: "Increasing",
+      value: trendDirection,
       icon: TrendingUp,
-      change: "3 weeks upward",
+      change: "Last 3 weeks",
       positive: true,
     },
   ];
+
+  // Extract section names from data
+  const sectionKeys = Object.keys(currentWeek).filter(key => key !== 'week' && key !== 'total');
+  const sectionDataKeys = sectionKeys.map((key, index) => ({
+    key,
+    color: `hsl(var(--chart-${(index % 5) + 1}))`,
+    label: key.charAt(0).toUpperCase() + key.slice(1),
+  }));
 
   return (
     <div className="space-y-8" data-testid="page-progress">
@@ -66,7 +119,7 @@ export default function Progress() {
       </div>
 
       <ProgressChart
-        data={volumeData}
+        data={data.volumeData}
         type="line"
         title="Weekly Volume Trend"
         dataKeys={[
@@ -74,16 +127,14 @@ export default function Progress() {
         ]}
       />
 
-      <ProgressChart
-        data={volumeData}
-        type="bar"
-        title="Sets by Section"
-        dataKeys={[
-          { key: 'chest', color: 'hsl(var(--chart-1))', label: 'Chest' },
-          { key: 'back', color: 'hsl(var(--chart-2))', label: 'Back' },
-          { key: 'legs', color: 'hsl(var(--chart-3))', label: 'Legs' },
-        ]}
-      />
+      {sectionDataKeys.length > 0 && (
+        <ProgressChart
+          data={data.volumeData}
+          type="bar"
+          title="Sets by Section"
+          dataKeys={sectionDataKeys}
+        />
+      )}
     </div>
   );
 }

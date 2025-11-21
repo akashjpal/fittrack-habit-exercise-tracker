@@ -1,52 +1,119 @@
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import HabitTracker from "@/components/HabitTracker";
 import AddHabitDialog from "@/components/AddHabitDialog";
-import { subDays } from "date-fns";
+import type { Habit, HabitCompletion } from "@shared/schema";
+import { useToast } from "@/hooks/use-toast";
+import { startOfDay, isSameDay } from "date-fns";
 
 export default function Habits() {
-  const habits = [
-    {
-      id: '1',
-      name: 'Morning Workout',
-      frequency: 'daily' as const,
-      completions: [
-        new Date(),
-        subDays(new Date(), 1),
-        subDays(new Date(), 2),
-        subDays(new Date(), 3),
-        subDays(new Date(), 4),
-        subDays(new Date(), 5),
-      ],
-      streak: 6,
+  const { toast } = useToast();
+
+  const { data: habits, isLoading: habitsLoading } = useQuery<Habit[]>({
+    queryKey: ["/api/habits"],
+  });
+
+  const { data: completions, isLoading: completionsLoading } = useQuery<HabitCompletion[]>({
+    queryKey: ["/api/completions"],
+  });
+
+  const addHabitMutation = useMutation({
+    mutationFn: async (habit: { name: string; frequency: 'daily' | 'weekly' }) => {
+      return apiRequest("POST", "/api/habits", habit);
     },
-    {
-      id: '2',
-      name: 'Read 30 Minutes',
-      frequency: 'daily' as const,
-      completions: [
-        new Date(),
-        subDays(new Date(), 1),
-        subDays(new Date(), 2),
-      ],
-      streak: 3,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/habits"] });
+      toast({
+        title: "Habit added",
+        description: "Your new habit has been created successfully.",
+      });
     },
-    {
-      id: '3',
-      name: 'Meditate',
-      frequency: 'daily' as const,
-      completions: [
-        new Date(),
-        subDays(new Date(), 1),
-      ],
-      streak: 2,
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to add habit. Please try again.",
+        variant: "destructive",
+      });
     },
-    {
-      id: '4',
-      name: 'Drink 8 Glasses of Water',
-      frequency: 'daily' as const,
-      completions: [new Date()],
-      streak: 1,
+  });
+
+  const toggleCompletionMutation = useMutation({
+    mutationFn: async ({ habitId, date, isCompleted }: { habitId: string; date: Date; isCompleted: boolean }) => {
+      if (isCompleted) {
+        // Delete completion
+        const dateStr = date.toISOString().split('T')[0];
+        return apiRequest("DELETE", `/api/completions/${habitId}/${dateStr}`);
+      } else {
+        // Add completion
+        return apiRequest("POST", "/api/completions", {
+          habitId,
+          date: date.toISOString(),
+        });
+      }
     },
-  ];
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/completions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/analytics/dashboard"] });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update habit. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  if (habitsLoading || completionsLoading) {
+    return (
+      <div className="space-y-8" data-testid="page-habits">
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div>
+            <h1 className="text-4xl font-bold mb-2">Habits</h1>
+            <p className="text-muted-foreground">Build consistency and track your daily routines</p>
+          </div>
+        </div>
+        <div className="text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
+
+  // Calculate streaks for each habit
+  const habitsWithData = habits?.map(habit => {
+    const habitCompletions = completions?.filter(c => c.habitId === habit.id).map(c => new Date(c.date)) || [];
+    
+    // Calculate streak
+    const today = startOfDay(new Date());
+    const sortedDates = habitCompletions
+      .map(d => startOfDay(d))
+      .sort((a, b) => b.getTime() - a.getTime());
+    
+    let streak = 0;
+    for (let i = 0; i < sortedDates.length; i++) {
+      const expectedDate = new Date(today);
+      expectedDate.setDate(today.getDate() - i);
+      const expected = startOfDay(expectedDate);
+      
+      if (sortedDates.some(d => isSameDay(d, expected))) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+
+    return {
+      ...habit,
+      completions: habitCompletions,
+      streak,
+    };
+  }) || [];
+
+  const handleToggleCompletion = (habitId: string, date: Date) => {
+    const habitCompletions = completions?.filter(c => c.habitId === habitId).map(c => new Date(c.date)) || [];
+    const isCompleted = habitCompletions.some(d => isSameDay(startOfDay(new Date(d)), startOfDay(date)));
+    
+    toggleCompletionMutation.mutate({ habitId, date, isCompleted });
+  };
 
   return (
     <div className="space-y-8" data-testid="page-habits">
@@ -55,13 +122,19 @@ export default function Habits() {
           <h1 className="text-4xl font-bold mb-2">Habits</h1>
           <p className="text-muted-foreground">Build consistency and track your daily routines</p>
         </div>
-        <AddHabitDialog onAdd={(habit) => console.log('Adding habit:', habit)} />
+        <AddHabitDialog onAdd={(habit) => addHabitMutation.mutate(habit)} />
       </div>
 
-      <HabitTracker
-        habits={habits}
-        onToggleCompletion={(habitId, date) => console.log('Toggle:', habitId, date)}
-      />
+      {habitsWithData.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground mb-4">No habits yet. Create one to start building consistency!</p>
+        </div>
+      ) : (
+        <HabitTracker
+          habits={habitsWithData}
+          onToggleCompletion={handleToggleCompletion}
+        />
+      )}
     </div>
   );
 }

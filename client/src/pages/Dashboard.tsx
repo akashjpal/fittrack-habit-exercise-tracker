@@ -1,44 +1,49 @@
+import { useQuery } from "@tanstack/react-query";
 import StreakCard from "@/components/StreakCard";
 import WeeklyVolumeCard from "@/components/WeeklyVolumeCard";
 import SectionProgressCard from "@/components/SectionProgressCard";
-import { subDays } from "date-fns";
+
+interface DashboardData {
+  currentStreak: number;
+  totalCompletedSets: number;
+  totalTargetSets: number;
+  sectionProgress: Array<{
+    sectionId: string;
+    sectionName: string;
+    completedSets: number;
+    targetSets: number;
+    lastWorkout?: string;
+  }>;
+}
 
 export default function Dashboard() {
-  const sections = [
-    {
-      name: "Chest",
-      completed: 8,
-      target: 12,
-      lastWorkout: subDays(new Date(), 1),
-    },
-    {
-      name: "Back",
-      completed: 10,
-      target: 15,
-      lastWorkout: subDays(new Date(), 2),
-    },
-    {
-      name: "Legs",
-      completed: 6,
-      target: 10,
-      lastWorkout: subDays(new Date(), 3),
-    },
-    {
-      name: "Shoulders",
-      completed: 5,
-      target: 10,
-      lastWorkout: subDays(new Date(), 4),
-    },
-    {
-      name: "Arms",
-      completed: 7,
-      target: 12,
-      lastWorkout: subDays(new Date(), 1),
-    },
-  ];
+  const { data, isLoading } = useQuery<DashboardData>({
+    queryKey: ["/api/analytics/dashboard"],
+  });
 
-  const totalCompleted = sections.reduce((sum, s) => sum + s.completed, 0);
-  const totalTarget = sections.reduce((sum, s) => sum + s.target, 0);
+  if (isLoading) {
+    return (
+      <div className="space-y-8" data-testid="page-dashboard">
+        <div>
+          <h1 className="text-4xl font-bold mb-2">Dashboard</h1>
+          <p className="text-muted-foreground">Track your progress and stay motivated</p>
+        </div>
+        <div className="text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="space-y-8" data-testid="page-dashboard">
+        <div>
+          <h1 className="text-4xl font-bold mb-2">Dashboard</h1>
+          <p className="text-muted-foreground">Track your progress and stay motivated</p>
+        </div>
+        <div className="text-muted-foreground">No data available</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8" data-testid="page-dashboard">
@@ -48,20 +53,23 @@ export default function Dashboard() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <StreakCard currentStreak={12} />
-        <WeeklyVolumeCard completedSets={totalCompleted} targetSets={totalTarget} />
+        <StreakCard currentStreak={data.currentStreak} />
+        <WeeklyVolumeCard
+          completedSets={data.totalCompletedSets}
+          targetSets={data.totalTargetSets}
+        />
       </div>
 
       <div>
         <h2 className="text-2xl font-semibold mb-4">Section Progress</h2>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {sections.map((section) => (
+          {data.sectionProgress.map((section) => (
             <SectionProgressCard
-              key={section.name}
-              sectionName={section.name}
-              completedSets={section.completed}
-              targetSets={section.target}
-              lastWorkout={section.lastWorkout}
+              key={section.sectionId}
+              sectionName={section.sectionName}
+              completedSets={section.completedSets}
+              targetSets={section.targetSets}
+              lastWorkout={section.lastWorkout ? new Date(section.lastWorkout) : undefined}
             />
           ))}
         </div>
