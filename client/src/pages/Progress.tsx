@@ -131,7 +131,7 @@ export default function Progress() {
         <ProgressChart
           data={data.volumeData}
           type="bar"
-          title="Sets by Section"
+          title="Sets by Exercise"
           dataKeys={sectionDataKeys}
         />
       )}

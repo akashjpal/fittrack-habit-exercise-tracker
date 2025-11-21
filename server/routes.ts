@@ -213,7 +213,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/analytics/progress", async (_req, res) => {
     try {
       const workouts = await storage.getAllWorkouts();
-      const sections = await storage.getAllSections();
 
       // Calculate weekly volume data for last 6 weeks
       const weeks = [];
@@ -231,12 +230,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           total: weekWorkouts.reduce((sum, w) => sum + w.sets, 0),
         };
 
-        // Add section breakdowns
-        sections.forEach(section => {
-          const sectionSets = weekWorkouts
-            .filter(w => w.sectionId === section.id)
+        // Add individual exercise breakdowns
+        const exerciseTypes = new Set(weekWorkouts.map(w => w.exerciseType));
+        exerciseTypes.forEach(exerciseType => {
+          const exerciseSets = weekWorkouts
+            .filter(w => w.exerciseType === exerciseType)
             .reduce((sum, w) => sum + w.sets, 0);
-          weekData[section.name.toLowerCase()] = sectionSets;
+          weekData[exerciseType.toLowerCase().replace(/\s+/g, '_')] = exerciseSets;
         });
 
         weeks.push(weekData);
