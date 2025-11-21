@@ -81,12 +81,15 @@ export default function Progress() {
     },
   ];
 
-  // Extract section names from data
-  const sectionKeys = Object.keys(currentWeek).filter(key => key !== 'week' && key !== 'total');
-  const sectionDataKeys = sectionKeys.map((key, index) => ({
+  // Extract exercise names from data
+  const exerciseKeys = Object.keys(currentWeek).filter(key => key !== 'week' && key !== 'total');
+  const exerciseCharts = exerciseKeys.map((key, index) => ({
     key,
     color: `hsl(var(--chart-${(index % 5) + 1}))`,
-    label: key.charAt(0).toUpperCase() + key.slice(1),
+    label: key
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' '),
   }));
 
   return (
@@ -127,13 +130,23 @@ export default function Progress() {
         ]}
       />
 
-      {sectionDataKeys.length > 0 && (
-        <ProgressChart
-          data={data.volumeData}
-          type="bar"
-          title="Sets by Exercise"
-          dataKeys={sectionDataKeys}
-        />
+      {exerciseCharts.length > 0 && (
+        <div className="space-y-8">
+          <h2 className="text-2xl font-bold">Individual Exercise Progress</h2>
+          <div className="grid gap-8 lg:grid-cols-2">
+            {exerciseCharts.map((exercise) => (
+              <ProgressChart
+                key={exercise.key}
+                data={data.volumeData}
+                type="line"
+                title={exercise.label}
+                dataKeys={[
+                  { key: exercise.key, color: exercise.color, label: exercise.label },
+                ]}
+              />
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );
