@@ -137,8 +137,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/completions/:habitId/:date", async (req, res) => {
     try {
-      const date = new Date(req.params.date);
-      await storage.deleteCompletion(req.params.habitId, date);
+      await storage.deleteCompletion(req.params.habitId, req.params.date);
       res.json({ success: true });
     } catch (error: any) {
       res.status(500).json({ error: error.message });

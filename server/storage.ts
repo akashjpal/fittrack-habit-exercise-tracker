@@ -34,7 +34,7 @@ export interface IStorage {
   getHabitCompletions(habitId: string): Promise<HabitCompletion[]>;
   getAllCompletions(): Promise<HabitCompletion[]>;
   createCompletion(completion: InsertHabitCompletion): Promise<HabitCompletion>;
-  deleteCompletion(habitId: string, date: Date): Promise<void>;
+  deleteCompletion(habitId: string, dateString: string): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -276,12 +276,13 @@ export class MemStorage implements IStorage {
     return this.createCompletionSync(completion);
   }
 
-  async deleteCompletion(habitId: string, date: Date): Promise<void> {
-    const targetDate = startOfDay(date).toISOString();
+  async deleteCompletion(habitId: string, dateString: string): Promise<void> {
+    const targetDate = startOfDay(new Date(dateString)).toISOString();
     for (const [id, completion] of Array.from(this.completions.entries())) {
+      const completionDate = startOfDay(new Date(completion.date)).toISOString();
       if (
         completion.habitId === habitId &&
-        completion.date === targetDate
+        completionDate === targetDate
       ) {
         this.completions.delete(id);
         return;
