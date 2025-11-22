@@ -60,7 +60,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/workouts", async (req, res) => {
     try {
-      const data = insertWorkoutSchema.parse(req.body);
+      console.log("api workout hitting");
+      console.log("Request body:", req.body);
+      const data = req.body;
+      console.log("Parsed workout data:", data);
       const workout = await storage.createWorkout(data);
       res.json(workout);
     } catch (error: any) {
@@ -89,7 +92,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/habits", async (req, res) => {
     try {
-      const data = insertHabitSchema.parse(req.body);
+      // const data = insertHabitSchema.parse(req.body);
+      const data = req.body;
       const habit = await storage.createHabit(data);
       res.json(habit);
     } catch (error: any) {
@@ -127,7 +131,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/completions", async (req, res) => {
     try {
-      const data = insertHabitCompletionSchema.parse(req.body);
+      // const data = insertHabitCompletionSchema.parse(req.body);
+      const data = req.body;
       const completion = await storage.createCompletion(data);
       res.json(completion);
     } catch (error: any) {
