@@ -20,273 +20,135 @@ Habit Tracking → Streak Building → Completion Tracking → Analytics
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 20+ 
-- npm or yarn
+- Node.js 20+
+- npm (or yarn/pnpm)
+- An active [Appwrite](https://appwrite.io/) instance.
 
 ### Installation & Setup
 
-1. **Clone the repository:**
-```bash
-git clone https://github.com/your-username/fittrack-habit-exercise-tracker.git
-cd fittrack-habit-exercise-tracker
-```
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/your-username/fittrack-habit-exercise-tracker.git
+    cd fittrack-habit-exercise-tracker
+    ```
 
-2. **Install dependencies:**
-```bash
-npm install
-```
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
 
-3. **Environment Setup:**
-```bash
-# Copy environment variables (if .env.example exists)
-cp .env.example .env
-# Edit .env with your configuration
-```
+3.  **Appwrite Setup:**
+    This project uses Appwrite as its backend database.
+    - Create a new Project in your Appwrite console.
+    - Create a new Database within your project.
+    - Create the following collections within your database:
+        - `exercise_sections_collection_id`
+        - `workouts_collection_id`
+        - `habits_collection_id`
+        - `habit_completions_collection_id`
+    - You will need to define the attributes for each collection based on the schemas in `shared/schema.ts`.
 
-4. **Database Setup (if using PostgreSQL):**
-```bash
-# Push database schema
-npm run db:push
-```
+4.  **Environment Setup:**
+    Create a `.env` file in the root of the project and add the following environment variables from your Appwrite project:
+    ```env
+    APPWRITE_ENDPOINT=https://cloud.appwrite.io/v1
+    APPWRITE_PROJECT_ID=your_project_id
+    APPWRITE_API_KEY=your_api_key
+    APPWRITE_DATABASE_ID=your_database_id
+    ```
 
-5. **Start Development Server:**
-```bash
-npm run dev
-```
+5.  **Start Development Server:**
+    ```bash
+    npm run dev
+    ```
 
-6. **Access the Application:**
-- Open your browser to `http://localhost:5000`
-- The app will automatically reload on code changes
+6.  **Access the Application:**
+    - Open your browser to `http://localhost:5000` (This is the default Vite port, check your terminal for the exact URL).
 
 ## 🛠️ Build & Deployment Commands
 
 ### Development
 ```bash
-npm run dev          # Start development server with hot reload
+npm run dev          # Starts the Vite frontend and Express backend dev servers
 npm run check        # Run TypeScript type checking
-npm run db:push      # Push database schema changes (if using DB)
 ```
 
 ### Production Build
 ```bash
-npm run build        # Build client bundle and server
-npm start           # Start production server
-```
-
-### Additional Commands
-```bash
-npm run lint        # Run linting (if configured)
-npm test            # Run tests (if configured)
+npm run build        # Bundles the client and server for production
+npm start           # Starts the production server (after building)
 ```
 
 ## 💻 Tech Stack
 
-### Frontend Technologies
-- **React 18.3.1** - Modern UI library with hooks and concurrent features
-- **TypeScript 5.6.3** - Type-safe JavaScript development
-- **Vite 5.4.20** - Fast build tool and development server
-- **Tailwind CSS 3.4.17** - Utility-first CSS framework
-- **Shadcn/ui Components** - High-quality, accessible UI components
-- **Radix UI** - Unstyled, accessible component primitives
-- **Wouter 3.3.5** - Lightweight routing solution
-- **TanStack Query 5.60.5** - Data fetching, caching and state management
-- **React Hook Form 7.55.0** - Performant forms with easy validation
-- **Zod 3.24.2** - TypeScript-first schema validation
-- **Recharts 2.15.2** - Data visualization and charting library
-- **Framer Motion 11.13.1** - Animation library
-- **Lucide React 0.453.0** - Beautiful icon library
-- **date-fns 3.6.0** - Modern date utility library
+### Frontend
+- **React 18** - Modern UI library
+- **TypeScript** - Type-safe JavaScript
+- **Vite** - Fast build tool and development server
+- **Tailwind CSS** - Utility-first CSS framework
+- **Shadcn/ui** - Accessible UI components
+- **Wouter** - Lightweight routing
+- **TanStack Query** - Data fetching and caching
+- **Zod** - Schema validation
 
-### Backend Technologies
-- **Express.js 4.21.2** - Fast, minimalist web framework
+### Backend
+- **Express.js** - Web framework for Node.js
 - **Node.js** - JavaScript runtime
 - **TypeScript** - Type-safe server-side development
-- **Drizzle ORM 0.39.1** - Modern SQL toolkit for TypeScript
-- **Neon Database** - Serverless PostgreSQL (optional)
-- **Express Session 1.18.1** - Session middleware
-- **Passport.js 0.7.0** - Authentication middleware
+- **Appwrite** - Backend-as-a-Service for database and storage
 
-### Development & Build Tools
-- **ESBuild 0.25.0** - Fast JavaScript bundler
-- **TSX 4.20.5** - TypeScript execution
-- **PostCSS 8.4.47** - CSS transformation tool
-- **Cross-env 10.1.0** - Cross-platform environment variables
+### Shared
+- **Zod** is used in the `shared/` directory to define a common data schema, ensuring type safety between the frontend and backend.
+
+## 🏛️ Architecture & Data Flow
+
+This project is a **full-stack monorepo** with a React frontend and an Express.js backend.
+
+-   **`client/`**: A standard Vite-powered React application. It uses **TanStack Query** to fetch data from the backend API. Components are built with **Shadcn/ui** and styled with **Tailwind CSS**.
+-   **`server/`**: An **Express.js** server that exposes a REST API. It serves as a middle layer that communicates with the Appwrite database.
+-   **`shared/`**: Contains **Zod** schemas that are used by both the client and server to ensure data consistency and type safety across the entire application.
+
+### Data Flow
+The data flows in a simple, unidirectional loop:
+
+1.  A React component (e.g., in `client/src/pages/`) uses a `useQuery` hook to request data from an `/api/...` endpoint.
+2.  The Express server (`server/app.ts` and `server/routes.ts`) receives the request.
+3.  The route handler calls a static method on the `DbHelper` class (`server/dbHelper.ts`).
+4.  `DbHelper` uses the `node-appwrite` SDK to perform the actual database operation (e.g., `listDocuments`, `createDocument`) against the Appwrite instance.
+5.  Data flows back through the chain to the client, where TanStack Query caches and manages the state.
+
+> **Note on Drizzle ORM:** The codebase contains files like `drizzle.config.ts`. These are misleading artifacts from a previous development phase. The project **does not** use Drizzle or a relational database. All data persistence is handled by **Appwrite**.
 
 ## 📁 Project Structure
-
 ```
 fittrack-habit-exercise-tracker/
-├── client/                     # Frontend React Application
-│   ├── public/                 # Static assets
-│   ├── src/
-│   │   ├── components/         # Reusable UI components
-│   │   │   ├── ui/            # Shadcn UI components
-│   │   │   ├── examples/      # Component examples
-│   │   │   ├── AddHabitDialog.tsx
-│   │   │   ├── ExerciseSectionCard.tsx
-│   │   │   ├── HabitTracker.tsx
-│   │   │   ├── ProgressChart.tsx
-│   │   │   └── ThemeToggle.tsx
-│   │   ├── pages/             # Main application pages
-│   │   │   ├── Dashboard.tsx  # Overview page
-│   │   │   ├── Exercises.tsx  # Workout tracking
-│   │   │   ├── Habits.tsx     # Habit management
-│   │   │   └── Progress.tsx   # Analytics & charts
-│   │   ├── hooks/             # Custom React hooks
-│   │   ├── lib/               # Utility functions
-│   │   └── App.tsx            # Main app component
-│   └── index.html             # HTML entry point
-├── server/                    # Backend Express Application
-│   ├── app.ts                 # Express app configuration
-│   ├── routes.ts              # API route definitions
-│   ├── storage.ts             # In-memory data storage
-│   ├── dbHelper.ts            # Database helper utilities
-│   ├── index-dev.ts           # Development server entry
-│   └── index-prod.ts          # Production server entry
-├── shared/                    # Shared code between client/server
-│   └── schema.ts              # TypeScript schemas and types
-├── scripts/                   # Build and deployment scripts
-├── drizzle.config.ts          # Database configuration
-├── vite.config.ts             # Vite build configuration
-├── tailwind.config.ts         # Tailwind CSS configuration
-├── tsconfig.json              # TypeScript configuration
-└── package.json               # Dependencies and scripts
-```
-
-## 🎯 Features
-
-### 🏋️ Exercise Tracking
-- **Section-based Organization**: Create custom exercise sections (Chest, Back, Legs, etc.)
-- **Detailed Workout Logging**: Track sets, reps, weight, and exercise type
-- **Weekly Volume Targets**: Set and monitor weekly set goals per muscle group
-- **Workout History**: Complete workout history with collapsible entries
-- **Real-time Progress**: Live updates of weekly completion percentages
-
-### 🔥 Habit Tracking
-- **Flexible Scheduling**: Daily or weekly habit frequencies
-- **Visual 7-Day View**: Checkbox-based habit completion tracking
-- **Intelligent Streaks**: Automatic streak calculation with milestone recognition
-- **Motivational Feedback**: Dynamic messages based on streak achievements
-- **Quick Toggle**: One-click habit completion for ease of use
-
-### 📊 Progress Analytics
-- **Interactive Charts**: Line and bar charts for volume trends
-- **Weekly Comparisons**: 6-week performance history
-- **Section Analysis**: Compare training volume across muscle groups
-- **Key Metrics**: Total sets, daily averages, trend indicators
-- **Dashboard Overview**: At-a-glance fitness summary
-
-### 🎨 Modern UI/UX
-- **Responsive Design**: Optimized for desktop, tablet, and mobile
-- **Dark/Light Themes**: Seamless theme switching with system preference detection
-- **Smooth Animations**: Micro-interactions and transitions
-- **Accessibility**: WCAG compliant components
-- **Mobile-First Navigation**: Collapsible navigation for small screens
-
-## 🔄 Data Flow Architecture
-
-```
-Frontend (React) 
-    ↓ API Calls (TanStack Query)
-Backend (Express.js)
-    ↓ Data Operations
-Storage Layer (Memory/Database)
-    ↓ Response
-Frontend State Updates
-```
-
-### Key API Endpoints
-- `GET/POST /api/sections` - Exercise section management
-- `GET/POST/DELETE /api/workouts` - Workout logging
-- `GET/POST/DELETE /api/habits` - Habit management
-- `GET/POST/DELETE /api/completions` - Habit completions
-- `GET /api/analytics/dashboard` - Dashboard metrics
-- `GET /api/analytics/progress` - Progress data
-
-## 🗄️ Data Models
-
-### Exercise Section
-```typescript
-{
-  id: string
-  name: string
-  targetSets: number
-  createdAt: string
-}
-```
-
-### Workout
-```typescript
-{
-  id: string
-  sectionId: string
-  exerciseType: string
-  sets: number
-  reps: number
-  weight: number
-  unit: string
-  date: string
-}
-```
-
-### Habit
-```typescript
-{
-  id: string
-  name: string
-  frequency: 'daily' | 'weekly'
-  createdAt: string
-}
-```
-
-### Habit Completion
-```typescript
-{
-  id: string
-  habitId: string
-  date: string
-}
-```
-
-## 🚀 Deployment
-
-### Development
-```bash
-npm run dev    # Runs on http://localhost:5000
-```
-
-### Production
-```bash
-npm run build  # Creates optimized build
-npm start      # Runs production server
-```
-
-### Environment Variables
-```bash
-NODE_ENV=development
-DATABASE_URL=your_database_url (if using PostgreSQL)
-SESSION_SECRET=your_session_secret (if using sessions)
+├── client/                     # Frontend React Application (Vite)
+├── server/                     # Backend Express Application
+│   ├── app.ts                  # Express app configuration
+│   ├── routes.ts               # API route definitions
+│   ├── dbHelper.ts             # Appwrite SDK logic
+│   └── ...
+├── shared/                     # Zod schemas shared between client/server
+│   └── schema.ts
+├── drizzle.config.ts           # (Unused) Misleading Drizzle ORM config
+├── vite.config.ts              # Vite build configuration
+├── package.json                # Dependencies and scripts
+└── README.md
 ```
 
 ## 🗺️ Roadmap
 
 ### Upcoming Features
-- [ ] **Database Integration**: PostgreSQL with Drizzle ORM
-- [ ] **User Authentication**: Secure login/registration system
-- [ ] **Exercise Library**: Pre-built exercise templates
-- [ ] **Quick Logging**: Fast workout entry with presets
-- [ ] **Calendar View**: Workout scheduling and planning
-- [ ] **Personal Records**: PR tracking and notifications
-- [ ] **Data Export**: CSV/PDF export capabilities
-- [ ] **Mobile App**: React Native companion app
-- [ ] **Social Features**: Friend challenges and sharing
-- [ ] **Advanced Analytics**: AI-powered insights
+- [ ] User Authentication via Appwrite
+- [ ] Exercise Library with pre-built templates
+- [ ] Calendar View for workout scheduling
+- [ ] Personal Record (PR) tracking
+- [ ] Data Export (CSV/PDF)
 
 ### Technical Improvements
-- [ ] **Performance Optimization**: Code splitting and lazy loading
-- [ ] **Offline Support**: PWA capabilities
-- [ ] **Real-time Sync**: WebSocket integration
-- [ ] **Backup System**: Automated data backups
+- [ ] Performance Optimization: Code splitting and lazy loading
+- [ ] Offline Support: PWA capabilities
+- [ ] Real-time Sync: WebSocket integration for live updates
 
 ## 🤝 Contributing
 
@@ -296,27 +158,6 @@ SESSION_SECRET=your_session_secret (if using sessions)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-### Development Guidelines
-- Follow TypeScript best practices
-- Use semantic HTML and accessible patterns
-- Write meaningful commit messages
-- Include tests for new features
-- Follow existing code style
-
 ## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🙏 Acknowledgments
-
-- **Shadcn/ui** - Beautiful, accessible component library
-- **Radix UI** - Unstyled component primitives
-- **Recharts** - Flexible charting library
-- **Tailwind CSS** - Utility-first CSS framework
-- **Vite** - Next-generation build tool
-
----
-
-**Built with ❤️ for the fitness community** 💪
-
-**Start tracking your fitness journey today!** 🚀
+This project is licensed under the MIT License.
