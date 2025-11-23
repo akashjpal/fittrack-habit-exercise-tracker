@@ -51,16 +51,52 @@ export default function Habits() {
         });
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/completions"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/analytics/dashboard"] });
+    onMutate: async ({ habitId, date, isCompleted }) => {
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      await queryClient.cancelQueries({ queryKey: ["/api/completions"] });
+
+      // Snapshot the previous value
+      const previousCompletions = queryClient.getQueryData<HabitCompletion[]>(["/api/completions"]);
+
+      // Optimistically update to the new value
+      queryClient.setQueryData<HabitCompletion[]>(["/api/completions"], (old) => {
+        if (!old) return [];
+
+        if (isCompleted) {
+          // We are removing a completion (optimistically)
+          // Filter out any completion that matches the habitId and date (ignoring time)
+          return old.filter(c =>
+            !(c.habitId === habitId && isSameDay(startOfDay(new Date(c.date)), startOfDay(date)))
+          );
+        } else {
+          // We are adding a completion (optimistically)
+          // Create a temporary completion object
+          const newCompletion: HabitCompletion = {
+            id: "temp-" + Math.random(), // Temporary ID
+            habitId,
+            date: startOfDay(date).toISOString(), // Use startOfDay to match backend storage
+            // Add other required fields if necessary, or cast as any if strictly typed
+          } as any;
+          return [...old, newCompletion];
+        }
+      });
+
+      // Return a context object with the snapshotted value
+      return { previousCompletions };
     },
-    onError: () => {
+    onError: (err, newTodo, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      queryClient.setQueryData(["/api/completions"], context?.previousCompletions);
       toast({
         title: "Error",
         description: "Failed to update habit. Please try again.",
         variant: "destructive",
       });
+    },
+    onSettled: () => {
+      // Always refetch after error or success:
+      queryClient.invalidateQueries({ queryKey: ["/api/completions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/analytics/dashboard"] });
     },
   });
 
@@ -81,19 +117,24 @@ export default function Habits() {
   // Calculate streaks for each habit
   const habitsWithData = habits?.map(habit => {
     const habitCompletions = completions?.filter(c => c.habitId === habit.id).map(c => new Date(c.date)) || [];
-    
+
+    // Debug logging
+    if (habitCompletions.length > 0) {
+      console.log(`Habit ${habit.name} (${habit.id}) has ${habitCompletions.length} completions. Last: ${habitCompletions[habitCompletions.length - 1].toISOString()}`);
+    }
+
     // Calculate streak
     const today = startOfDay(new Date());
     const sortedDates = habitCompletions
       .map(d => startOfDay(d))
       .sort((a, b) => b.getTime() - a.getTime());
-    
+
     let streak = 0;
     for (let i = 0; i < sortedDates.length; i++) {
       const expectedDate = new Date(today);
       expectedDate.setDate(today.getDate() - i);
       const expected = startOfDay(expectedDate);
-      
+
       if (sortedDates.some(d => isSameDay(d, expected))) {
         streak++;
       } else {
@@ -110,8 +151,8 @@ export default function Habits() {
 
   const handleToggleCompletion = (habitId: string, date: Date) => {
     const habitCompletions = completions?.filter(c => c.habitId === habitId).map(c => new Date(c.date)) || [];
-    const isCompleted = habitCompletions.some(d => isSameDay(startOfDay(new Date(d)), startOfDay(date)));
-    
+    const isCompleted = habitCompletions.some(d => isSameDay(startOfDay(d), startOfDay(date)));
+
     toggleCompletionMutation.mutate({ habitId, date, isCompleted });
   };
 

@@ -22,8 +22,8 @@ export default function HabitTracker({ habits, onToggleCompletion }: HabitTracke
   const last7Days = Array.from({ length: 7 }, (_, i) => subDays(new Date(), 6 - i));
 
   const isCompleted = (habit: Habit, date: Date) => {
-    return habit.completions.some(completion => 
-      isSameDay(startOfDay(completion), startOfDay(date))
+    return habit.completions.some(completion =>
+      format(completion, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
     );
   };
 
@@ -54,7 +54,7 @@ export default function HabitTracker({ habits, onToggleCompletion }: HabitTracke
                 <span className="text-lg font-bold font-display">{habit.streak}</span>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-2">
               {last7Days.map((date) => (
                 <div key={date.toISOString()} className="flex flex-col items-center gap-1 flex-1">

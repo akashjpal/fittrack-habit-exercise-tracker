@@ -16,7 +16,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Dashboard} />
       <Route path="/exercises" component={Exercises} />
-      <Route path="/habits" component={Habits} />
+      {/* <Route path="/habits" component={Habits} /> */}
       <Route path="/progress" component={Progress} />
       <Route component={NotFound} />
     </Switch>
@@ -29,7 +29,7 @@ function Navigation() {
   const links = [
     { path: "/", label: "Dashboard", icon: LayoutDashboard },
     { path: "/exercises", label: "Exercises", icon: Dumbbell },
-    { path: "/habits", label: "Habits", icon: CheckSquare },
+    // { path: "/habits", label: "Habits", icon: CheckSquare },
     { path: "/progress", label: "Progress", icon: TrendingUp },
   ];
 
@@ -51,11 +51,10 @@ function Navigation() {
                   <Link
                     key={link.path}
                     href={link.path}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-colors hover-elevate ${
-                      isActive
+                    className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-colors hover-elevate ${isActive
                         ? 'text-foreground bg-muted'
                         : 'text-muted-foreground'
-                    }`}
+                      }`}
                     data-testid={`link-${link.label.toLowerCase()}`}
                   >
                     <Icon className="h-4 w-4" />
@@ -77,11 +76,10 @@ function Navigation() {
               <Link
                 key={link.path}
                 href={link.path}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors hover-elevate ${
-                  isActive
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors hover-elevate ${isActive
                     ? 'text-foreground bg-muted'
                     : 'text-muted-foreground'
-                }`}
+                  }`}
                 data-testid={`link-mobile-${link.label.toLowerCase()}`}
               >
                 <Icon className="h-4 w-4" />

@@ -71,19 +71,19 @@ export class MemStorage implements IStorage {
       id,
       date: date ? date.toISOString() : new Date().toISOString(),
     };
-    try{
+    try {
       console.log("Creating workout in DB:", newWorkout);
       await DbHelper.createWorkout(newWorkout);
       return newWorkout;
     }
-    catch(err){
+    catch (err) {
       console.error("Error creating workout in DB:", err);
       throw err;
     }
   }
 
   // working
-  private  async createHabitSync(habit: InsertHabit): Promise<Habit> {
+  private async createHabitSync(habit: InsertHabit): Promise<Habit> {
     const id = randomUUID();
     const newHabit: Habit = {
       ...habit,
@@ -97,7 +97,7 @@ export class MemStorage implements IStorage {
   // TODO: Need to check
   private async createCompletionSync(completion: InsertHabitCompletion): Promise<HabitCompletion> {
     const id = randomUUID();
-    const completionDate = typeof completion.date === 'string' 
+    const completionDate = typeof completion.date === 'string'
       ? new Date(completion.date)
       : completion.date;
     const newCompletion: HabitCompletion = {
@@ -114,9 +114,9 @@ export class MemStorage implements IStorage {
   async getAllSections(): Promise<ExerciseSection[]> {
     try {
       const result = await DbHelper.getAllExerciseSections();
-      return result.documents as ExerciseSection[];
+      return result.documents.map(doc => ({ ...doc, id: doc.$id })) as unknown as ExerciseSection[];
     }
-    catch(err) {
+    catch (err) {
       console.error("Error fetching exercise sections from DB:", err);
       throw err;
     }
@@ -125,9 +125,9 @@ export class MemStorage implements IStorage {
   async getSectionById(id: string): Promise<ExerciseSection | undefined> {
     try {
       const result = await DbHelper.getExerciseSection(id);
-      return result as ExerciseSection | undefined;
+      return { ...result, id: result.$id } as unknown as ExerciseSection;
     }
-    catch(err) {
+    catch (err) {
       console.error("Error fetching exercise section by ID from DB:", err);
       throw err;
     }
@@ -138,10 +138,10 @@ export class MemStorage implements IStorage {
   }
 
   async deleteSection(id: string): Promise<void> {
-    try{
+    try {
       await DbHelper.deleteExerciseSection(id);
     }
-    catch(err){
+    catch (err) {
       console.error("Error deleting exercise section from DB:", err);
       throw err;
     }
@@ -151,8 +151,8 @@ export class MemStorage implements IStorage {
   async getAllWorkouts(): Promise<Workout[]> {
     try {
       const result = await DbHelper.getWorkout();
-      return result.documents as Workout[];
-    }catch(err) {
+      return result.documents.map(doc => ({ ...doc, id: doc.$id })) as unknown as Workout[];
+    } catch (err) {
       console.error("Error fetching workouts from DB:", err);
       throw err;
     }
@@ -162,9 +162,9 @@ export class MemStorage implements IStorage {
     try {
       const result = await DbHelper.getWorkoutsBySection(sectionId);
       console.log(result);
-      return result.documents as Workout[];
+      return result.documents.map(doc => ({ ...doc, id: doc.$id })) as unknown as Workout[];
     }
-    catch(err) {
+    catch (err) {
       console.error("Error fetching workouts by section from DB:", err);
       throw err;
     }
@@ -175,10 +175,10 @@ export class MemStorage implements IStorage {
   }
 
   async deleteWorkout(id: string): Promise<void> {
-    try{
+    try {
       await DbHelper.deleteWorkout(id);
     }
-    catch(err){
+    catch (err) {
       console.error("Error deleting workout from DB:", err);
       throw err;
     }
@@ -188,9 +188,9 @@ export class MemStorage implements IStorage {
   async getAllHabits(): Promise<Habit[]> {
     try {
       const result = await DbHelper.getAllHabits();
-      return result.documents as Habit[];
+      return result.documents.map(doc => ({ ...doc, id: doc.$id })) as unknown as Habit[];
     }
-    catch(err) {
+    catch (err) {
       console.error("Error fetching habits from DB:", err);
       throw err;
     }
@@ -199,9 +199,9 @@ export class MemStorage implements IStorage {
   async getHabitById(id: string): Promise<Habit | undefined> {
     try {
       const result = await DbHelper.getHabit(id);
-      return result as Habit | undefined;
+      return { ...result, id: result.$id } as unknown as Habit;
     }
-    catch(err) {
+    catch (err) {
       console.error("Error fetching habit by ID from DB:", err);
       throw err;
     }
@@ -219,10 +219,10 @@ export class MemStorage implements IStorage {
         this.completions.delete(completionId);
       }
     }
-    try{
+    try {
       await DbHelper.deleteHabit(id);
     }
-    catch(err){
+    catch (err) {
       console.error("Error deleting habit from DB:", err);
       throw err;
     }
@@ -232,9 +232,9 @@ export class MemStorage implements IStorage {
   async getHabitCompletions(habitId: string): Promise<HabitCompletion[]> {
     try {
       const result = await DbHelper.getHabitCompletion(habitId);
-      return result.documents as HabitCompletion[];
+      return result.documents.map(doc => ({ ...doc, id: doc.$id })) as unknown as HabitCompletion[];
     }
-    catch(err) {
+    catch (err) {
       console.error("Error fetching habit completions from DB:", err);
       throw err;
     }
@@ -243,9 +243,9 @@ export class MemStorage implements IStorage {
   async getAllCompletions(): Promise<HabitCompletion[]> {
     try {
       const result = await DbHelper.getAllHabitCompletions();
-      return result.documents as HabitCompletion[];
+      return result.documents.map(doc => ({ ...doc, id: doc.$id })) as unknown as HabitCompletion[];
     }
-    catch(err) {
+    catch (err) {
       console.error("Error fetching all habit completions from DB:", err);
       throw err;
     }
@@ -256,25 +256,25 @@ export class MemStorage implements IStorage {
   }
 
   async deleteCompletion(habitId: string, dateString: string): Promise<void> {
-    try{
+    try {
       const completions = await DbHelper.getHabitCompletion(habitId);
       const targetDate = startOfDay(new Date(dateString)).toISOString();
-      for (const completion of completions.documents as HabitCompletion[]) {
+      for (const completion of completions.documents as any[]) {
         const completionDate = startOfDay(new Date(completion.date)).toISOString();
         if (
           completion.habitId === habitId &&
           completionDate === targetDate
         ) {
-          await DbHelper.deleteHabitCompletion(completion.id);
+          await DbHelper.deleteHabitCompletion(completion.$id);
           return;
         }
       }
     }
-    catch(err){
+    catch (err) {
       console.error("Error deleting habit completion from DB:", err);
       throw err;
+    }
   }
-}
 }
 
 export const storage = new MemStorage();

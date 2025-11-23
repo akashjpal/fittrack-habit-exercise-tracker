@@ -8,11 +8,6 @@ client
   .setEndpoint(process.env.APPWRITE_ENDPOINT || "http://localhost/v1")
   .setProject(process.env.APPWRITE_PROJECT_ID || "your_project_id")
   .setKey(process.env.APPWRITE_API_KEY || "your_api_key");
-// Add API key for authentication
-// const apiKey = process.env.APPWRITE_API_KEY;
-// if (apiKey) {
-//   client.headers = { "X-Appwrite-Key": apiKey };
-// }
 
 const databases = new Databases(client);
 const databaseId = process.env.APPWRITE_DATABASE_ID || "your_database_id";
@@ -52,7 +47,7 @@ export class DbHelper {
 
   // Workouts CRUD
   static async createWorkout(data: {
-    id: string;
+    sectionId: string;
     exerciseType: string;
     sets: number;
     reps: number;
@@ -60,22 +55,21 @@ export class DbHelper {
     unit: string;
     date: string;
   }) {
-    try{
+    try {
       console.log("CREATE WORKOUT DATA:", data);
       return databases.createDocument(databaseId, COLLECTIONS.workouts, ID.unique(), {
-      sectionId: data.id,
-      exerciseType: data.exerciseType,
-      sets: data.sets,
-      reps: data.reps,
-      weight: data.weight,
-      unit: data.unit,
-      date: data.date
-    });
-    }catch(err: any){
+        sectionId: data.sectionId,
+        exerciseType: data.exerciseType,
+        sets: data.sets,
+        reps: data.reps,
+        weight: data.weight,
+        unit: data.unit,
+        date: data.date
+      });
+    } catch (err: any) {
       console.error("CREATE WORKOUT ERROR:", err?.message || err);
       throw err;
     }
-     
   }
 
   static async getWorkout() {
@@ -98,7 +92,6 @@ export class DbHelper {
       throw err;
     }
   }
-
 
   static async updateWorkout(id: string, data: Partial<{
     sectionId: string;
@@ -143,15 +136,15 @@ export class DbHelper {
   // Habit Completions CRUD
   static async createHabitCompletion(data: { id: string, habitId: string; date: string }) {
     return databases.createDocument(databaseId, COLLECTIONS.habitCompletions, "unique()", {
-      habitId: data.id,
+      habitId: data.habitId,
       date: data.date
     });
   }
 
-  static async getHabitCompletion(id: string) {
-    return databases.getDocument(databaseId, COLLECTIONS.habitCompletions,
-      Query.equal("habitId", id)
-    );
+  static async getHabitCompletion(habitId: string) {
+    return databases.listDocuments(databaseId, COLLECTIONS.habitCompletions, [
+      Query.equal("habitId", habitId)
+    ]);
   }
 
   static async getAllHabitCompletions() {
@@ -165,8 +158,6 @@ export class DbHelper {
   }
 
   static async deleteHabitCompletion(id: string) {
-    return databases.deleteDocument(databaseId, COLLECTIONS.habitCompletions, 
-      Query.equal("habitId", id)
-    );
+    return databases.deleteDocument(databaseId, COLLECTIONS.habitCompletions, id);
   }
 }
