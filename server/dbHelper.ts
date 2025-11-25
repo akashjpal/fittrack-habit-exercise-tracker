@@ -106,7 +106,8 @@ export class DbHelper {
         databaseId,
         COLLECTIONS.workouts,
         [
-          Query.between("date", startDate, endDate)
+          Query.greaterThanEqual("date", startDate),
+          Query.lessThanEqual("date", endDate)
         ]
       );
 

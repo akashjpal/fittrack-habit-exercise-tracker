@@ -9,7 +9,10 @@ import {
 } from "@shared/schema";
 import { startOfDay, subDays, startOfWeek, endOfWeek, isSameDay } from "date-fns";
 
+import { registerAIRoutes } from "./ai-routes";
+
 export async function registerRoutes(app: Express): Promise<Server> {
+  registerAIRoutes(app);
   // Exercise Sections
   app.get("/api/sections", async (req, res) => {
     try {
@@ -67,7 +70,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/workouts/week", async (req, res) => {
     try {
       const { startDate, endDate } = req.query;
+      console.log(`Fetching workouts for week: ${startDate} to ${endDate}`);
       const workouts = await storage.getWorkoutsByWeek(startDate as string, endDate as string);
+      console.log(`Found ${workouts.length} workouts`);
       res.json(workouts);
     } catch (error: any) {
       res.status(500).json({ error: error.message });

@@ -8,8 +8,9 @@ import Dashboard from "@/pages/Dashboard";
 import Exercises from "@/pages/Exercises";
 import Habits from "@/pages/Habits";
 import Progress from "@/pages/Progress";
+import AIFitCheck from "@/pages/AIFitCheck";
 import ThemeToggle from "@/components/ThemeToggle";
-import { LayoutDashboard, Dumbbell, CheckSquare, TrendingUp } from "lucide-react";
+import { LayoutDashboard, Dumbbell, CheckSquare, TrendingUp, Brain } from "lucide-react";
 
 function Router() {
   return (
@@ -18,6 +19,7 @@ function Router() {
       <Route path="/exercises" component={Exercises} />
       {/* <Route path="/habits" component={Habits} /> */}
       <Route path="/progress" component={Progress} />
+      <Route path="/ai-fit-check" component={AIFitCheck} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -31,6 +33,7 @@ function Navigation() {
     { path: "/exercises", label: "Exercises", icon: Dumbbell },
     // { path: "/habits", label: "Habits", icon: CheckSquare },
     { path: "/progress", label: "Progress", icon: TrendingUp },
+    { path: "/ai-fit-check", label: "AI Fit Check", icon: Brain },
   ];
 
   return (
@@ -52,8 +55,8 @@ function Navigation() {
                     key={link.path}
                     href={link.path}
                     className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-colors hover-elevate ${isActive
-                        ? 'text-foreground bg-muted'
-                        : 'text-muted-foreground'
+                      ? 'text-foreground bg-muted'
+                      : 'text-muted-foreground'
                       }`}
                     data-testid={`link-${link.label.toLowerCase()}`}
                   >
@@ -77,8 +80,8 @@ function Navigation() {
                 key={link.path}
                 href={link.path}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors hover-elevate ${isActive
-                    ? 'text-foreground bg-muted'
-                    : 'text-muted-foreground'
+                  ? 'text-foreground bg-muted'
+                  : 'text-muted-foreground'
                   }`}
                 data-testid={`link-mobile-${link.label.toLowerCase()}`}
               >

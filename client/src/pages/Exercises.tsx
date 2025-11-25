@@ -7,6 +7,16 @@ import WeekRangeSelector from "@/components/WeekRangeSelector";
 import type { ExerciseSection, Workout } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { startOfWeek, endOfWeek } from "date-fns";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function Exercises() {
   const { toast } = useToast();
@@ -19,6 +29,8 @@ export default function Exercises() {
     end.setHours(23, 59, 59, 999);
     return end;
   });
+
+  const [sectionToDelete, setSectionToDelete] = useState<string | null>(null);
 
   const handleRangeChange = (start: Date, end: Date) => {
     setWeekStart(start);
@@ -77,11 +89,13 @@ export default function Exercises() {
       reps: number;
       weight: number;
       unit: string;
+      date?: string;
     }) => {
       return apiRequest("POST", "/api/workouts", workout);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/workouts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/workouts/week"] });
       queryClient.invalidateQueries({ queryKey: ["/api/analytics/dashboard"] });
       queryClient.invalidateQueries({ queryKey: ["/api/analytics/progress"] });
       toast({
@@ -104,6 +118,7 @@ export default function Exercises() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/workouts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/workouts/week"] });
       queryClient.invalidateQueries({ queryKey: ["/api/analytics/dashboard"] });
       queryClient.invalidateQueries({ queryKey: ["/api/analytics/progress"] });
       toast({
@@ -115,6 +130,27 @@ export default function Exercises() {
       toast({
         title: "Error",
         description: "Failed to delete workout. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteSectionMutation = useMutation({
+    mutationFn: async (sectionId: string) => {
+      return apiRequest("DELETE", `/api/sections/${sectionId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/sections"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/analytics/dashboard"] });
+      toast({
+        title: "Section deleted",
+        description: "Your exercise section has been removed.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete section. Please try again.",
         variant: "destructive",
       });
     },
@@ -141,6 +177,8 @@ export default function Exercises() {
       date: new Date(w.date),
     })) || [],
   })) || [];
+
+
 
   return (
     <div className="space-y-8" data-testid="page-exercises">
@@ -172,17 +210,55 @@ export default function Exercises() {
               sectionName={section.name}
               targetSets={section.targetSets}
               workouts={section.workouts}
-              onAddWorkout={(workout) =>
+              onAddWorkout={(workout) => {
+                // If adding to a past week, use the start of that week (plus 12 hours to be safe/middle of day)
+                // If adding to current week, use current time
+                const isCurrentWeek = weekStart <= new Date() && weekEnd >= new Date();
+                const workoutDate = isCurrentWeek ? new Date() : new Date(weekStart.getTime() + 12 * 60 * 60 * 1000);
+
+                console.log("Adding workout:", {
+                  weekStart: weekStart.toISOString(),
+                  isCurrentWeek,
+                  calculatedDate: workoutDate.toISOString()
+                });
+
                 addWorkoutMutation.mutate({
                   ...workout,
                   sectionId: section.id,
-                })
-              }
+                  date: workoutDate.toISOString(),
+                });
+              }}
               onDeleteWorkout={(workoutId) => deleteWorkoutMutation.mutate(workoutId)}
+              onDeleteSection={() => setSectionToDelete(section.id)}
             />
           ))}
         </div>
       )}
+
+      <AlertDialog open={!!sectionToDelete} onOpenChange={(open) => !open && setSectionToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this exercise section and all workouts contained within it. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (sectionToDelete) {
+                  deleteSectionMutation.mutate(sectionToDelete);
+                  setSectionToDelete(null);
+                }
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -32,6 +32,8 @@ export const workoutSchema = z.object({
 export const insertWorkoutSchema = workoutSchema.omit({
   id: true,
   date: true
+}).extend({
+  date: z.string().optional()
 });
 
 export type Workout = z.infer<typeof workoutSchema>;
