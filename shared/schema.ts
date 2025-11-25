@@ -5,12 +5,13 @@ export const exerciseSectionSchema = z.object({
   id: z.string(),
   name: z.string(),
   targetSets: z.number(),
+  date: z.string(), // ISO string for the week/date
   createdAt: z.string(), // ISO string from Date.toISOString()
 });
 
-export const insertExerciseSectionSchema = exerciseSectionSchema.omit({ 
-  id: true, 
-  createdAt: true 
+export const insertExerciseSectionSchema = exerciseSectionSchema.omit({
+  id: true,
+  createdAt: true
 });
 
 export type ExerciseSection = z.infer<typeof exerciseSectionSchema>;
@@ -28,9 +29,9 @@ export const workoutSchema = z.object({
   date: z.string(), // ISO string from Date.toISOString()
 });
 
-export const insertWorkoutSchema = workoutSchema.omit({ 
-  id: true, 
-  date: true 
+export const insertWorkoutSchema = workoutSchema.omit({
+  id: true,
+  date: true
 });
 
 export type Workout = z.infer<typeof workoutSchema>;
@@ -44,9 +45,9 @@ export const habitSchema = z.object({
   createdAt: z.string(), // ISO string from Date.toISOString()
 });
 
-export const insertHabitSchema = habitSchema.omit({ 
-  id: true, 
-  createdAt: true 
+export const insertHabitSchema = habitSchema.omit({
+  id: true,
+  createdAt: true
 });
 
 export type Habit = z.infer<typeof habitSchema>;
@@ -59,8 +60,8 @@ export const habitCompletionSchema = z.object({
   date: z.string(), // ISO string from Date.toISOString()
 });
 
-export const insertHabitCompletionSchema = habitCompletionSchema.omit({ 
-  id: true 
+export const insertHabitCompletionSchema = habitCompletionSchema.omit({
+  id: true
 });
 
 export type HabitCompletion = z.infer<typeof habitCompletionSchema>;

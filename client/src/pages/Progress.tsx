@@ -1,7 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import ProgressChart from "@/components/ProgressChart";
+import TrendRangeSelector from "@/components/TrendRangeSelector";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, Target, Calendar } from "lucide-react";
+import { useState } from "react";
+import { subWeeks, startOfWeek, endOfWeek } from "date-fns";
+import { apiRequest } from "@/lib/queryClient";
 
 interface ProgressData {
   volumeData: Array<{
@@ -12,8 +16,22 @@ interface ProgressData {
 }
 
 export default function Progress() {
+  const [trendStart, setTrendStart] = useState(() => {
+    const date = subWeeks(new Date(), 3);
+    return startOfWeek(date, { weekStartsOn: 1 });
+  });
+  const [trendEnd, setTrendEnd] = useState(() => {
+    return endOfWeek(new Date(), { weekStartsOn: 1 });
+  });
+
   const { data, isLoading } = useQuery<ProgressData>({
-    queryKey: ["/api/analytics/progress"],
+    queryKey: ["/api/analytics/progress", trendStart, trendEnd],
+    queryFn: () => {
+      const url = new URL(window.location.origin + "/api/analytics/progress");
+      url.searchParams.set("startDate", trendStart.toISOString());
+      url.searchParams.set("endDate", trendEnd.toISOString());
+      return apiRequest("GET", url.toString()).then(res => res.json());
+    },
   });
 
   if (isLoading) {
@@ -44,8 +62,8 @@ export default function Progress() {
 
   const currentWeek = data.volumeData[data.volumeData.length - 1];
   const previousWeek = data.volumeData[data.volumeData.length - 2];
-  
-  const weeklyChange = previousWeek 
+
+  const weeklyChange = previousWeek
     ? Math.round(((currentWeek.total as number - (previousWeek.total as number)) / (previousWeek.total as number)) * 100)
     : 0;
 
@@ -95,7 +113,17 @@ export default function Progress() {
   return (
     <div className="space-y-8" data-testid="page-progress">
       <div>
-        <h1 className="text-4xl font-bold mb-2">Progress Analytics</h1>
+        <div className="flex items-center justify-between flex-wrap gap-4 mb-2">
+          <h1 className="text-4xl font-bold">Progress Analytics</h1>
+          <TrendRangeSelector
+            startDate={trendStart}
+            endDate={trendEnd}
+            onRangeChange={(start, end) => {
+              setTrendStart(start);
+              setTrendEnd(end);
+            }}
+          />
+        </div>
         <p className="text-muted-foreground">Visualize your training trends and achievements</p>
       </div>
 

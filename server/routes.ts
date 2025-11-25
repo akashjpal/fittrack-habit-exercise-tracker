@@ -11,9 +11,15 @@ import { startOfDay, subDays, startOfWeek, endOfWeek, isSameDay } from "date-fns
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Exercise Sections
-  app.get("/api/sections", async (_req, res) => {
+  app.get("/api/sections", async (req, res) => {
     try {
-      const sections = await storage.getAllSections();
+      const { startDate, endDate } = req.query;
+      let sections;
+      if (startDate && endDate) {
+        sections = await storage.getSectionsByWeek(startDate as string, endDate as string);
+      } else {
+        sections = await storage.getAllSections();
+      }
       res.json(sections);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -52,6 +58,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/workouts/section/:sectionId", async (req, res) => {
     try {
       const workouts = await storage.getWorkoutsBySection(req.params.sectionId);
+      res.json(workouts);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/workouts/week", async (req, res) => {
+    try {
+      const { startDate, endDate } = req.query;
+      const workouts = await storage.getWorkoutsByWeek(startDate as string, endDate as string);
       res.json(workouts);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -159,12 +175,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Calculate weekly progress
       const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
       const weekEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
-      
+
       const thisWeekWorkouts = workouts.filter(w => {
         const workoutDate = new Date(w.date);
         return workoutDate >= weekStart && workoutDate <= weekEnd;
       });
-      
+
       const totalCompletedSets = thisWeekWorkouts.reduce((sum, w) => sum + w.sets, 0);
       const totalTargetSets = sections.reduce((sum, s) => sum + s.targetSets, 0);
 
@@ -190,11 +206,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const sortedCompletions = completions
         .map(c => startOfDay(new Date(c.date)))
         .sort((a, b) => b.getTime() - a.getTime());
-      
+
       let currentStreak = 0;
       const uniqueDates = Array.from(new Set(sortedCompletions.map(d => d.getTime())))
         .map(t => new Date(t));
-      
+
       for (let i = 0; i < uniqueDates.length; i++) {
         const expectedDate = subDays(today, i);
         if (isSameDay(uniqueDates[i], expectedDate)) {
@@ -215,23 +231,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/analytics/progress", async (_req, res) => {
+  app.get("/api/analytics/progress", async (req, res) => {
     try {
       const workouts = await storage.getAllWorkouts();
+      const { startDate, endDate } = req.query;
 
-      // Calculate weekly volume data for last 6 weeks
+      let start = startDate ? new Date(startDate as string) : subDays(new Date(), 3 * 7); // Default to 3 weeks ago
+      let end = endDate ? new Date(endDate as string) : new Date();
+
+      // Adjust start and end to week boundaries
+      start = startOfWeek(start, { weekStartsOn: 1 });
+      end = endOfWeek(end, { weekStartsOn: 1 });
+
+      // Calculate weekly volume data
       const weeks = [];
-      for (let i = 5; i >= 0; i--) {
-        const weekStart = startOfWeek(subDays(new Date(), i * 7), { weekStartsOn: 1 });
-        const weekEnd = endOfWeek(subDays(new Date(), i * 7), { weekStartsOn: 1 });
-        
+      let currentWeekStart = start;
+
+      while (currentWeekStart <= end) {
+        const currentWeekEnd = endOfWeek(currentWeekStart, { weekStartsOn: 1 });
+
         const weekWorkouts = workouts.filter(w => {
           const workoutDate = new Date(w.date);
-          return workoutDate >= weekStart && workoutDate <= weekEnd;
+          return workoutDate >= currentWeekStart && workoutDate <= currentWeekEnd;
         });
 
         const weekData: any = {
-          week: `Week ${6 - i}`,
+          week: `Week of ${currentWeekStart.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`,
           total: weekWorkouts.reduce((sum, w) => sum + w.sets, 0),
         };
 
@@ -245,6 +270,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
 
         weeks.push(weekData);
+
+        // Move to next week
+        currentWeekStart = new Date(currentWeekStart);
+        currentWeekStart.setDate(currentWeekStart.getDate() + 7);
       }
 
       res.json({ volumeData: weeks });

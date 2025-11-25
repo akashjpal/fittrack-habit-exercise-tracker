@@ -7,7 +7,7 @@ interface WeeklyVolumeCardProps {
 }
 
 export default function WeeklyVolumeCard({ completedSets, targetSets }: WeeklyVolumeCardProps) {
-  const percentage = Math.round((completedSets / targetSets) * 100);
+  const percentage = targetSets > 0 ? Math.round((completedSets / targetSets) * 100) : 0;
 
   return (
     <Card data-testid="card-weekly-volume">

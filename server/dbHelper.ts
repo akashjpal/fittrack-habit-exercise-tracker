@@ -22,10 +22,11 @@ const COLLECTIONS = {
 
 export class DbHelper {
   // Exercise Sections CRUD
-  static async createExerciseSection(data: { name: string; targetSets: number }) {
+  static async createExerciseSection(data: { name: string; targetSets: number; date: string }) {
     return databases.createDocument(databaseId, COLLECTIONS.exerciseSections, "unique()", {
       name: data.name,
-      targetSets: data.targetSets
+      targetSets: data.targetSets,
+      date: data.date
     });
   }
 
@@ -35,6 +36,12 @@ export class DbHelper {
 
   static async getAllExerciseSections() {
     return databases.listDocuments(databaseId, COLLECTIONS.exerciseSections);
+  }
+
+  static async getExerciseSectionsByWeek(startDate: string, endDate: string) {
+    return databases.listDocuments(databaseId, COLLECTIONS.exerciseSections, [
+      Query.between("date", startDate, endDate)
+    ]);
   }
 
   static async updateExerciseSection(id: string, data: Partial<{ name: string; targetSets: number }>) {
@@ -83,6 +90,23 @@ export class DbHelper {
         COLLECTIONS.workouts,
         [
           Query.equal("sectionId", sectionId)
+        ]
+      );
+
+      return result;
+    } catch (err: any) {
+      console.error("LIST ERROR:", err?.message || err);
+      throw err;
+    }
+  }
+
+  static async getWorkoutsByWeek(startDate: string, endDate: string) {
+    try {
+      const result = await databases.listDocuments(
+        databaseId,
+        COLLECTIONS.workouts,
+        [
+          Query.between("date", startDate, endDate)
         ]
       );
 
