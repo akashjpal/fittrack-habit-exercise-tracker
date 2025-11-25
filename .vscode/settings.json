@@ -1,0 +1,9 @@
+// tell me about this file
+{
+    "files.autoSave": "afterDelay",
+    "files.autoSaveDelay": 1000,
+    "editor.tabSize": 4,
+    "editor.formatOnSave": true,
+    "python.pythonPath": "venv/bin/python",
+    "terminal.integrated.shell.linux": "/bin/bash"
+}
