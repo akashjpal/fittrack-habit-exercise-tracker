@@ -1,24 +1,56 @@
+import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import ExerciseSectionCard from "@/components/ExerciseSectionCard";
 import AddSectionDialog from "@/components/AddSectionDialog";
+import WeekRangeSelector from "@/components/WeekRangeSelector";
 import type { ExerciseSection, Workout } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { startOfWeek, endOfWeek } from "date-fns";
 
 export default function Exercises() {
   const { toast } = useToast();
 
+  // Week range state (resets to current week on refresh)
+  const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 0 }));
+  const [weekEnd, setWeekEnd] = useState(() => {
+    const end = endOfWeek(new Date(), { weekStartsOn: 0 });
+    // Set to end of day to include workouts created on Saturday
+    end.setHours(23, 59, 59, 999);
+    return end;
+  });
+
+  const handleRangeChange = (start: Date, end: Date) => {
+    setWeekStart(start);
+    setWeekEnd(end);
+  };
+
   const { data: sections, isLoading: sectionsLoading } = useQuery<ExerciseSection[]>({
-    queryKey: ["/api/sections"],
+    queryKey: ["/api/sections", weekStart, weekEnd],
+    queryFn: () => {
+      const url = new URL(window.location.origin + "/api/sections");
+      url.searchParams.set("startDate", weekStart.toISOString());
+      url.searchParams.set("endDate", weekEnd.toISOString());
+      return apiRequest("GET", url.toString()).then(res => res.json());
+    },
   });
 
   const { data: workouts, isLoading: workoutsLoading } = useQuery<Workout[]>({
-    queryKey: ["/api/workouts"],
+    queryKey: ["/api/workouts/week", weekStart, weekEnd],
+    queryFn: () => {
+      const url = new URL(window.location.origin + "/api/workouts/week");
+      url.searchParams.set("startDate", weekStart.toISOString());
+      url.searchParams.set("endDate", weekEnd.toISOString());
+      return apiRequest("GET", url.toString()).then(res => res.json());
+    },
   });
 
   const addSectionMutation = useMutation({
     mutationFn: async (section: { name: string; targetSets: number }) => {
-      return apiRequest("POST", "/api/sections", section);
+      return apiRequest("POST", "/api/sections", {
+        ...section,
+        date: weekStart.toISOString(),
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/sections"] });
@@ -66,6 +98,28 @@ export default function Exercises() {
     },
   });
 
+  const deleteWorkoutMutation = useMutation({
+    mutationFn: async (workoutId: string) => {
+      return apiRequest("DELETE", `/api/workouts/${workoutId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/workouts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/analytics/dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/analytics/progress"] });
+      toast({
+        title: "Workout deleted",
+        description: "Your workout has been removed.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete workout. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   if (sectionsLoading || workoutsLoading) {
     return (
       <div className="space-y-8" data-testid="page-exercises">
@@ -100,6 +154,12 @@ export default function Exercises() {
         />
       </div>
 
+      <WeekRangeSelector
+        weekStart={weekStart}
+        weekEnd={weekEnd}
+        onRangeChange={handleRangeChange}
+      />
+
       {sectionsWithWorkouts.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-muted-foreground mb-4">No exercise sections yet. Create one to get started!</p>
@@ -118,6 +178,7 @@ export default function Exercises() {
                   sectionId: section.id,
                 })
               }
+              onDeleteWorkout={(workoutId) => deleteWorkoutMutation.mutate(workoutId)}
             />
           ))}
         </div>

@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, Dumbbell } from "lucide-react";
+import { ChevronDown, Dumbbell, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
 import WorkoutEntryDialog from "./WorkoutEntryDialog";
@@ -21,6 +21,7 @@ interface ExerciseSectionCardProps {
   targetSets: number;
   workouts: Workout[];
   onAddWorkout?: (workout: Omit<Workout, 'id' | 'date'>) => void;
+  onDeleteWorkout?: (workoutId: string) => void;
 }
 
 export default function ExerciseSectionCard({
@@ -28,6 +29,7 @@ export default function ExerciseSectionCard({
   targetSets,
   workouts,
   onAddWorkout,
+  onDeleteWorkout,
 }: ExerciseSectionCardProps) {
   const [isOpen, setIsOpen] = useState(false);
   const completedSets = workouts.reduce((sum, w) => sum + w.sets, 0);
@@ -47,7 +49,7 @@ export default function ExerciseSectionCard({
       </CardHeader>
       <CardContent className="space-y-4">
         <WorkoutEntryDialog sectionName={sectionName} onSave={onAddWorkout} />
-        
+
         {workouts.length > 0 && (
           <Collapsible open={isOpen} onOpenChange={setIsOpen}>
             <CollapsibleTrigger className="flex items-center justify-between w-full text-sm font-medium text-muted-foreground hover-elevate p-2 rounded-md" data-testid={`button-toggle-workouts-${sectionName.toLowerCase()}`}>
@@ -58,14 +60,29 @@ export default function ExerciseSectionCard({
               {workouts.map((workout) => (
                 <div
                   key={workout.id}
-                  className="p-3 rounded-md bg-muted/50 space-y-1"
+                  className="p-3 rounded-md bg-muted/50 space-y-1 group"
                   data-testid={`workout-entry-${workout.id}`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-medium text-sm">{workout.exerciseType}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {format(workout.date, 'MMM d, yyyy')}
-                    </span>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-sm">{workout.exerciseType}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">
+                            {format(workout.date, 'MMM d, yyyy')}
+                          </span>
+                          {onDeleteWorkout && (
+                            <button
+                              onClick={() => onDeleteWorkout(workout.id)}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-destructive hover:text-destructive-foreground rounded"
+                              aria-label="Delete workout"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {workout.sets} sets × {workout.reps} reps @ {workout.weight}{workout.unit}

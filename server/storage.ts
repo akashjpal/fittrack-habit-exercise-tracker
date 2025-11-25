@@ -15,6 +15,7 @@ import { DbHelper } from "./dbHelper";
 export interface IStorage {
   // Exercise Sections
   getAllSections(): Promise<ExerciseSection[]>;
+  getSectionsByWeek(startDate: string, endDate: string): Promise<ExerciseSection[]>;
   getSectionById(id: string): Promise<ExerciseSection | undefined>;
   createSection(section: InsertExerciseSection): Promise<ExerciseSection>;
   deleteSection(id: string): Promise<void>;
@@ -22,6 +23,7 @@ export interface IStorage {
   // Workouts
   getAllWorkouts(): Promise<Workout[]>;
   getWorkoutsBySection(sectionId: string): Promise<Workout[]>;
+  getWorkoutsByWeek(startDate: string, endDate: string): Promise<Workout[]>;
   createWorkout(workout: InsertWorkout): Promise<Workout>;
   deleteWorkout(id: string): Promise<void>;
 
@@ -57,6 +59,7 @@ export class MemStorage implements IStorage {
       ...section,
       id,
       createdAt: new Date().toISOString(),
+      date: section.date // Ensure date is passed
     };
     await DbHelper.createExerciseSection(newSection);
     return newSection;
@@ -114,10 +117,31 @@ export class MemStorage implements IStorage {
   async getAllSections(): Promise<ExerciseSection[]> {
     try {
       const result = await DbHelper.getAllExerciseSections();
-      return result.documents.map(doc => ({ ...doc, id: doc.$id })) as unknown as ExerciseSection[];
+      return result.documents.map(doc => ({
+        ...doc,
+        id: doc.$id,
+        createdAt: doc.$createdAt,
+        date: doc.date // Ensure date is mapped
+      })) as unknown as ExerciseSection[];
     }
     catch (err) {
       console.error("Error fetching exercise sections from DB:", err);
+      throw err;
+    }
+  }
+
+  async getSectionsByWeek(startDate: string, endDate: string): Promise<ExerciseSection[]> {
+    try {
+      const result = await DbHelper.getExerciseSectionsByWeek(startDate, endDate);
+      return result.documents.map(doc => ({
+        ...doc,
+        id: doc.$id,
+        createdAt: doc.$createdAt,
+        date: doc.date
+      })) as unknown as ExerciseSection[];
+    }
+    catch (err) {
+      console.error("Error fetching exercise sections by week from DB:", err);
       throw err;
     }
   }
@@ -169,6 +193,17 @@ export class MemStorage implements IStorage {
       throw err;
     }
   }
+  async getWorkoutsByWeek(startDate: string, endDate: string): Promise<Workout[]> {
+    try {
+      const result = await DbHelper.getWorkoutsByWeek(startDate, endDate);
+      return result.documents.map(doc => ({ ...doc, id: doc.$id })) as unknown as Workout[];
+    }
+    catch (err) {
+      console.error("Error fetching workouts by week from DB:", err);
+      throw err;
+    }
+  }
+
   // TODO: Need to check
   async createWorkout(workout: InsertWorkout): Promise<Workout> {
     return this.createWorkoutSync(workout);

@@ -15,7 +15,7 @@ export default function SectionProgressCard({
   targetSets,
   lastWorkout,
 }: SectionProgressCardProps) {
-  const percentage = Math.round((completedSets / targetSets) * 100);
+  const percentage = targetSets > 0 ? Math.round((completedSets / targetSets) * 100) : 0;
 
   return (
     <Card className="hover-elevate" data-testid={`card-section-${sectionName.toLowerCase()}`}>
