@@ -19,6 +19,7 @@ This application is for:
 - **Interactive Dashboard:** A comprehensive dashboard that provides an at-a-glance view of your weekly progress, current streak for habits, and section-wise workout completion.
 - **Progress Visualization:** Track your workout volume and other metrics over time with interactive charts.
 - **Exercise Management:** Create and manage custom exercise sections to organize your workout routines.
+- **Voice Workout Logging:** Hands-free workout logging using AI. Simply speak your exercises, sets, reps, and weights, and the system automatically parses and logs them.
 - **Modern UI/UX:** A clean, responsive, and intuitive user interface built with React, Tailwind CSS, and Shadcn/ui.
 
 ## 🏗️ Architecture and High-Level Flow
@@ -82,6 +83,16 @@ graph TD
     - If valid, the data is persisted to the Appwrite database.
     - The backend confirms the successful operation, and React Query automatically re-fetches the relevant data to keep the UI in sync.
 
+## 🔄 User Workflows
+
+### Voice Logging a Workout
+1.  Navigate to the **Exercises** page.
+2.  Select the desired **Week** and **Workout Section** (e.g., "Legs").
+3.  Click the **Microphone** icon in the "Voice Logging" card.
+4.  Speak your workout details (e.g., *"I did 3 sets of Bench Press for 10 reps with 60kg"*).
+5.  Click the **Stop** button.
+6.  The audio is uploaded, transcribed by **ElevenLabs**, and parsed by **Google Gemini**. The workout is automatically added to your list!
+
 ## 💻 Tech Stack
 
 This project is built with a modern, TypeScript-first tech stack designed for performance, scalability, and an excellent developer experience.
@@ -104,6 +115,8 @@ This project is built with a modern, TypeScript-first tech stack designed for pe
 | **Tooling**    | [Drizzle ORM](https://orm.drizzle.team/)                     | A TypeScript ORM for SQL databases (used for scaffolding).                                                 |
 |                | [ESLint](https://eslint.org/)                                | A pluggable and configurable linter tool for identifying and reporting on patterns in JavaScript.          |
 |                | [Prettier](https://prettier.io/)                             | An opinionated code formatter that enforces a consistent style.                                            |
+| **AI & ML**    | [ElevenLabs](https://elevenlabs.io/)                         | Text-to-Speech and Speech-to-Text API (used for voice logging).                                            |
+|                | [Google Gemini](https://deepmind.google/technologies/gemini/) | Multimodal AI model used for parsing natural language workout logs into structured data.                   |
 
 ## 🚀 Installation Guide
 
@@ -143,6 +156,11 @@ APPWRITE_DATABASE_ID=your_database_id
 # Server Configuration
 # The port on which the Express server will run
 PORT=5000
+
+# AI Configuration
+ELEVENLABS_API_KEY=your_elevenlabs_key
+GEMINI_API_KEY=your_gemini_key
+
 ```
 
 ### 4. Project Structure
@@ -244,6 +262,31 @@ The backend exposes a RESTful API for managing workouts, habits, and other resou
     "$permissions": [],
     "$collectionId": "workouts_collection_id",
     "$databaseId": "your_database_id"
+  }
+  ```
+
+### Voice Log Workout
+
+- **Endpoint:** `POST /api/voice-log`
+- **Headers:** `Content-Type: multipart/form-data`
+- **Request Body:**
+  - `audio`: The audio file (webm/mp3/wav).
+  - `sectionId`: (Optional) The ID of the workout section.
+  - `date`: (Optional) ISO date string for the workout.
+- **Response Body:**
+  ```json
+  {
+    "transcription": "Squats 3 sets of 10 reps 100 kg",
+    "workouts": [
+      {
+        "id": "workout_id",
+        "exerciseType": "Squats",
+        "sets": 3,
+        "reps": 10,
+        "weight": 100,
+        "unit": "kg"
+      }
+    ]
   }
   ```
 
