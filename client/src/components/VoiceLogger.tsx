@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Mic, Square, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -39,6 +39,16 @@ export default function VoiceLogger({ weekStart, weekEnd }: VoiceLoggerProps) {
             return apiRequest("GET", url.toString()).then(res => res.json());
         },
     });
+
+    // Reset selection if the selected section is not in the current week's sections
+    useEffect(() => {
+        if (sections) {
+            const isValidSection = sections.find(s => s.id === selectedSectionId);
+            if (!isValidSection) {
+                setSelectedSectionId("");
+            }
+        }
+    }, [sections, selectedSectionId]);
 
     const startRecording = async () => {
         if (!selectedSectionId) {

@@ -79,11 +79,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
               "sets": number,
               "reps": number,
               "weight": number (optional, 0 if not specified),
+              "unit": string (optional, "lbs" or "kgs", default "lbs"),
               "rpe": number (optional, 0 if not specified)
             }
           ]
         }
-        
         If multiple exercises are mentioned, include them all in the array.
         Standardize exercise names where possible (e.g., "bench" -> "Bench Press").
         Return ONLY valid JSON.
@@ -122,8 +122,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           exerciseType: w.exerciseName,
           sets: w.sets,
           reps: w.reps,
-          weight: w.weight || 0,
-          unit: "lbs",
+          weight: Number(w.weight) || 0,
+          unit: w.unit || "lbs",
           date: req.body.date || new Date().toISOString()
         };
 
