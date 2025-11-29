@@ -4,6 +4,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import ExerciseSectionCard from "@/components/ExerciseSectionCard";
 import AddSectionDialog from "@/components/AddSectionDialog";
 import WeekRangeSelector from "@/components/WeekRangeSelector";
+import VoiceLogger from "@/components/VoiceLogger";
 import type { ExerciseSection, Workout } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { startOfWeek, endOfWeek } from "date-fns";
@@ -197,6 +198,8 @@ export default function Exercises() {
         weekEnd={weekEnd}
         onRangeChange={handleRangeChange}
       />
+
+      <VoiceLogger weekStart={weekStart} weekEnd={weekEnd} />
 
       {sectionsWithWorkouts.length === 0 ? (
         <div className="text-center py-12">

@@ -9,10 +9,142 @@ import {
 } from "@shared/schema";
 import { startOfDay, subDays, startOfWeek, endOfWeek, isSameDay } from "date-fns";
 
+import multer from "multer";
+import FormData from "form-data";
+import axios from "axios";
+import fs from "fs";
+import path from "path";
 import { registerAIRoutes } from "./ai-routes";
+
+// Configure multer for handling file uploads
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: "uploads/",
+    filename: (req, file, cb) => {
+      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+      cb(null, file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname));
+    },
+  }),
+});
+
+// Ensure uploads directory exists
+if (!fs.existsSync("uploads")) {
+  fs.mkdirSync("uploads");
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   registerAIRoutes(app);
+
+  app.post("/api/voice-log", upload.single("audio"), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No audio file uploaded" });
+      }
+
+      console.log("Received audio file:", req.file.path);
+
+      // 1. Send to ElevenLabs STT
+      const formData = new FormData();
+      formData.append("file", fs.createReadStream(req.file.path));
+      formData.append("model_id", "scribe_v1");
+
+      console.log("Sending to ElevenLabs...");
+      const sttResponse = await axios.post(
+        "https://api.elevenlabs.io/v1/speech-to-text",
+        formData,
+        {
+          headers: {
+            ...formData.getHeaders(),
+            "xi-api-key": process.env.ELEVENLABS_API_KEY,
+          },
+        }
+      );
+
+      const transcribedText = sttResponse.data.text;
+      console.log("Transcribed Text:", transcribedText);
+
+      // 2. Send to Gemini for parsing
+      const { GoogleGenerativeAI } = await import("@google/generative-ai");
+      const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+      const model = genAI.getGenerativeModel({ model: "models/gemini-2.5-flash" });
+
+      const prompt = `
+        Extract workout data from the following text: "${transcribedText}"
+        
+        Return a JSON object with the following structure:
+        {
+          "workouts": [
+            {
+              "exerciseName": "Exercise Name",
+              "sets": number,
+              "reps": number,
+              "weight": number (optional, 0 if not specified),
+              "rpe": number (optional, 0 if not specified)
+            }
+          ]
+        }
+        
+        If multiple exercises are mentioned, include them all in the array.
+        Standardize exercise names where possible (e.g., "bench" -> "Bench Press").
+        Return ONLY valid JSON.
+      `;
+
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+      const jsonStr = text.replace(/```json/g, "").replace(/```/g, "").trim();
+      const parsedData = JSON.parse(jsonStr);
+
+      // 3. Save to Database
+      const savedWorkouts = [];
+      const requestedSectionId = req.body.sectionId;
+
+      for (const w of parsedData.workouts) {
+        let sectionId = requestedSectionId;
+
+        // If no sectionId provided (fallback), find or create a default one
+        if (!sectionId) {
+          let sections = await storage.getAllSections();
+          sectionId = sections[0]?.id;
+
+          if (!sectionId) {
+            const newSection = await storage.createSection({
+              name: "Voice Logged",
+              targetSets: 10,
+              date: new Date().toISOString()
+            });
+            sectionId = newSection.id;
+          }
+        }
+
+        const workoutData = {
+          sectionId: sectionId,
+          exerciseType: w.exerciseName,
+          sets: w.sets,
+          reps: w.reps,
+          weight: w.weight || 0,
+          unit: "lbs",
+          date: req.body.date || new Date().toISOString()
+        };
+
+        const saved = await storage.createWorkout(workoutData);
+        savedWorkouts.push(saved);
+      }
+
+      // Cleanup uploaded file
+      fs.unlinkSync(req.file.path);
+
+      res.json({
+        transcription: transcribedText,
+        workouts: savedWorkouts
+      });
+
+    } catch (error: any) {
+      console.error("Voice Log Error:", error.response?.data || error.message);
+      res.status(500).json({ error: error.message || "Failed to process voice log" });
+    }
+  });
+
   // Exercise Sections
   app.get("/api/sections", async (req, res) => {
     try {
