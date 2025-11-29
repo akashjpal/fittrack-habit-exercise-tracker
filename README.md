@@ -7,6 +7,7 @@ A full-stack web application designed to help users track their fitness journey,
 FitTrack is a comprehensive fitness tracking application for individuals who want to systematically log their workouts and daily habits. The project was built to provide a simple yet powerful tool for users to take control of their fitness goals, with a focus on data visualization and progress monitoring.
 
 This application is for:
+
 - Fitness enthusiasts who want to track their workout progress over time.
 - Individuals looking to build and maintain healthy habits.
 - Developers interested in a modern full-stack TypeScript project with a React frontend and a Node.js/Express backend.
@@ -20,44 +21,89 @@ This application is for:
 - **Exercise Management:** Create and manage custom exercise sections to organize your workout routines.
 - **Modern UI/UX:** A clean, responsive, and intuitive user interface built with React, Tailwind CSS, and Shadcn/ui.
 
-## 🏗️ Architecture + Flow
+## 🏗️ Architecture and High-Level Flow
 
-The project follows a classic client-server architecture, with a React single-page application (SPA) for the frontend and a Node.js/Express server for the backend. The backend acts as a Backend for Frontend (BFF), communicating with Appwrite for data persistence.
+This project is built on a **monolithic architecture** with a clear separation of concerns between the frontend and backend, all within a single repository. This design simplifies development and deployment while maintaining a structured and scalable codebase.
 
-### System Flow
+The backend is a **Node.js/Express server** that functions as a **Backend for Frontend (BFF)**. It serves the static frontend assets and provides a RESTful API for all data operations. The frontend is a **React Single-Page Application (SPA)**, built with Vite, that offers a dynamic and responsive user experience.
+
+### System Architecture Diagram
+
+The following diagram illustrates the high-level architecture of the system:
 
 ```mermaid
 graph TD
-    A[User] -->|Interacts with| B(React Client);
-    B -->|HTTP Requests| C(Express Backend);
-    C -->|Appwrite SDK| D(Appwrite Database);
-    D -->|Data| C;
-    C -->|JSON Response| B;
-    B -->|Renders UI| A;
+    subgraph "Browser"
+        A[User]
+    end
+
+    subgraph "Client (React SPA)"
+        B(React Components)
+        C(React Query for Data Fetching)
+        D(Wouter for Routing)
+    end
+
+    subgraph "Server (Node.js/Express)"
+        E(API Endpoints)
+        F(Shared Zod Schemas)
+        G(Appwrite SDK)
+    end
+
+    subgraph "Data Layer"
+        H(Appwrite Database)
+    end
+
+    A -- "Interacts with UI" --> B
+    B -- "Triggers Data Fetch/Mutation" --> C
+    C -- "Sends HTTP Request" --> E
+    E -- "Validates with" --> F
+    E -- "Calls" --> G
+    G -- "Interacts with" --> H
+    H -- "Returns Data" --> G
+    G -- "Returns Data" --> E
+    E -- "Sends JSON Response" --> C
+    C -- "Updates UI State" --> B
+    B -- "Renders Components" --> D
+    D -- "Controls Page Views" --> B
 ```
 
-### User Flow
+### Data and User Flow
 
-1.  **View Data:** The user visits the web app. The React client fetches data from the Express backend's API endpoints.
-2.  **Data Request:** The Express backend receives the request and uses the `node-appwrite` SDK to fetch data from the Appwrite database.
-3.  **Data Response:** Appwrite returns the data to the backend, which then forwards it to the client as a JSON response.
-4.  **Render UI:** The React client receives the JSON data and renders the UI using components like the dashboard, exercise list, and habit tracker.
-5.  **Log Data:** The user submits a new workout or habit completion. The client sends a `POST` request to the backend.
-6.  **Store Data:** The backend receives the data, validates it using Zod schemas, and then uses the Appwrite SDK to store the new data in the Appwrite database.
+1.  **Initial Load**: When a user accesses the site, the Express server serves the initial `index.html` and the bundled React application.
+2.  **Client-Side Routing**: The React app takes over, and `wouter` manages all subsequent URL changes and component rendering without full page reloads.
+3.  **Data Fetching**:
+    - React components use `useQuery` from **React Query** to fetch data from the backend API (e.g., `/api/workouts`).
+    - The Express server receives the request, validates it, and uses the **Appwrite SDK** to query the Appwrite database.
+    - The backend sends the data back to the client as a JSON response.
+    - React Query caches the data, manages the loading/error states, and updates the UI.
+4.  **Data Mutation**:
+    - When a user performs an action (e.g., adding a new habit), the client uses `useMutation` from React Query to send a `POST`, `PUT`, or `DELETE` request to the backend.
+    - The backend validates the incoming data against **Zod schemas** located in the `/shared` directory to ensure type safety and consistency.
+    - If valid, the data is persisted to the Appwrite database.
+    - The backend confirms the successful operation, and React Query automatically re-fetches the relevant data to keep the UI in sync.
 
 ## 💻 Tech Stack
 
-The project uses a modern, TypeScript-first tech stack.
+This project is built with a modern, TypeScript-first tech stack designed for performance, scalability, and an excellent developer experience.
 
-| Category          | Technology                                                                                                                                                             |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Frontend**      | [React](https://react.dev/), [Vite](https://vitejs.dev/), [Tailwind CSS](https://tailwindcss.com/), [shadcn/ui](https://ui.shadcn.com/), [React Query](https://tanstack.com/query/latest), [wouter](https://github.com/molefrog/wouter), [Recharts](https://recharts.org/) |
-| **Backend**       | [Node.js](https://nodejs.org/), [Express.js](https://expressjs.com/), [Passport.js](http://www.passportjs.org/)                                                          |
-| **Database**      | [Appwrite](https://appwrite.io/)                                                                                                                                       |
-| **Deployment**    | [Vercel](https://vercel.com/), [Replit](https://replit.com/)                                                                                                           |
-| **AI Integrations**| (Not specified)                                                                                                                                                      |
-| **Tools**         | [TypeScript](https://www.typescriptlang.org/), [ESLint](https://eslint.org/), [Prettier](https://prettier.io/), [Drizzle ORM](https://orm.drizzle.team/) (scaffolding) |
-| **MCP Servers**   | (Not applicable)                                                                                                                                                       |
+| Category       | Technology                                                   | Description                                                                                                |
+| -------------- | ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| **Frontend**   | [React](https://react.dev/)                                  | A JavaScript library for building user interfaces.                                                         |
+|                | [Vite](https://vitejs.dev/)                                  | A next-generation frontend tooling that provides a faster and leaner development experience.               |
+|                | [Tailwind CSS](https://tailwindcss.com/)                     | A utility-first CSS framework for rapidly building custom designs.                                         |
+|                | [shadcn/ui](https://ui.shadcn.com/)                          | A collection of beautifully designed, accessible, and customizable React components.                       |
+|                | [React Query](https://tanstack.com/query/latest)             | A powerful data-fetching and state management library for React.                                           |
+|                | [wouter](https://github.com/molefrog/wouter)                 | A minimalist routing library for React.                                                                    |
+|                | [Recharts](https://recharts.org/)                            | A composable charting library built on React components.                                                   |
+| **Backend**    | [Node.js](https://nodejs.org/)                               | A JavaScript runtime built on Chrome's V8 JavaScript engine.                                               |
+|                | [Express.js](https://expressjs.com/)                         | A minimal and flexible Node.js web application framework.                                                  |
+| **Database**   | [Appwrite](https://appwrite.io/)                             | An open-source backend-as-a-service platform that provides database, authentication, and storage services. |
+| **Language**   | [TypeScript](https://www.typescriptlang.org/)                | A typed superset of JavaScript that compiles to plain JavaScript.                                          |
+| **Validation** | [Zod](https://zod.dev/)                                      | A TypeScript-first schema declaration and validation library.                                              |
+| **Deployment** | [Vercel](https://vercel.com/), [Replit](https://replit.com/) | Platforms for deploying and hosting the application.                                                       |
+| **Tooling**    | [Drizzle ORM](https://orm.drizzle.team/)                     | A TypeScript ORM for SQL databases (used for scaffolding).                                                 |
+|                | [ESLint](https://eslint.org/)                                | A pluggable and configurable linter tool for identifying and reporting on patterns in JavaScript.          |
+|                | [Prettier](https://prettier.io/)                             | An opinionated code formatter that enforces a consistent style.                                            |
 
 ## 🚀 Installation Guide
 
@@ -84,27 +130,52 @@ npm install
 
 ### 3. Environment Variable Setup
 
-Create a `.env` file in the root of the project and add the following environment variables.
+Create a `.env` file in the root of the project and add the following environment variables. These are essential for connecting to your Appwrite instance and running the server.
 
 ```
 # Appwrite Configuration
+# Replace with your Appwrite instance details
 APPWRITE_ENDPOINT=https://cloud.appwrite.io/v1
 APPWRITE_PROJECT_ID=your_project_id
 APPWRITE_API_KEY=your_api_key
 APPWRITE_DATABASE_ID=your_database_id
 
 # Server Configuration
+# The port on which the Express server will run
 PORT=5000
 ```
 
-### 4. Folder Structure
+### 4. Project Structure
 
-The project is organized into the following main directories:
+The project is organized into a monorepo structure with distinct directories for the client, server, and shared code. This separation helps maintain a clean and organized codebase.
 
-- `/client`: Contains the React frontend application.
-- `/server`: Contains the Node.js/Express backend server.
-- `/shared`: Contains shared code, such as Zod schemas, used by both the client and server.
-- `/migrations`: Contains database migration files (if using Drizzle).
+```
+/
+├── client/         # React frontend application
+│   ├── src/
+│   │   ├── components/ # Reusable UI components
+│   │   ├── pages/      # Top-level page components
+│   │   ├── lib/        # Utility functions and libraries
+│   │   └── App.tsx     # Main application component
+│   └── index.html      # Entry point for the frontend
+│
+├── server/         # Node.js/Express backend
+│   ├── app.ts      # Express application setup
+│   ├── routes.ts   # API route definitions
+│   └── index-dev.ts  # Development server entry point
+│
+├── shared/         # Code shared between client and server
+│   └── schema.ts   # Zod schemas for data validation
+│
+├── .env.example    # Example environment variables
+├── package.json    # Project dependencies and scripts
+└── README.md       # Project documentation
+```
+
+- **`/client`**: This directory contains the entire React frontend. All components, pages, hooks, and styles related to the user interface are located here.
+- **`/server`**: This is where the Node.js/Express backend lives. It handles API requests, interacts with the database, and serves the frontend.
+- **`/shared`**: This directory contains code that is used by both the client and the server. This is particularly useful for sharing data structures and validation schemas (like Zod schemas) to ensure consistency across the stack.
+- **`/migrations`**: If you were using a traditional SQL database with Drizzle ORM, this folder would contain the database migration files.
 
 ## 🏃 Running the Project
 
@@ -142,39 +213,39 @@ The backend exposes a RESTful API for managing workouts, habits, and other resou
 
 ### Example: Create a Workout
 
--   **Endpoint:** `POST /api/workouts`
--   **Request Body:**
+- **Endpoint:** `POST /api/workouts`
+- **Request Body:**
 
-    ```json
-    {
-      "sectionId": "your_section_id",
-      "exerciseType": "Bench Press",
-      "sets": 3,
-      "reps": 10,
-      "weight": 100,
-      "unit": "kg"
-    }
-    ```
+  ```json
+  {
+    "sectionId": "your_section_id",
+    "exerciseType": "Bench Press",
+    "sets": 3,
+    "reps": 10,
+    "weight": 100,
+    "unit": "kg"
+  }
+  ```
 
--   **Response Body:**
+- **Response Body:**
 
-    ```json
-    {
-      "$id": "unique_workout_id",
-      "sectionId": "your_section_id",
-      "exerciseType": "Bench Press",
-      "sets": 3,
-      "reps": 10,
-      "weight": 100,
-      "unit": "kg",
-      "date": "2025-11-23T10:00:00.000Z",
-      "$createdAt": "2025-11-23T10:00:00.000Z",
-      "$updatedAt": "2025-11-23T10:00:00.000Z",
-      "$permissions": [],
-      "$collectionId": "workouts_collection_id",
-      "$databaseId": "your_database_id"
-    }
-    ```
+  ```json
+  {
+    "$id": "unique_workout_id",
+    "sectionId": "your_section_id",
+    "exerciseType": "Bench Press",
+    "sets": 3,
+    "reps": 10,
+    "weight": 100,
+    "unit": "kg",
+    "date": "2025-11-23T10:00:00.000Z",
+    "$createdAt": "2025-11-23T10:00:00.000Z",
+    "$updatedAt": "2025-11-23T10:00:00.000Z",
+    "$permissions": [],
+    "$collectionId": "workouts_collection_id",
+    "$databaseId": "your_database_id"
+  }
+  ```
 
 ### Error Handling
 
