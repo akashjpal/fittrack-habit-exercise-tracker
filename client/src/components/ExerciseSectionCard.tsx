@@ -22,6 +22,7 @@ interface ExerciseSectionCardProps {
   workouts: Workout[];
   onAddWorkout?: (workout: Omit<Workout, 'id' | 'date'>) => void;
   onDeleteWorkout?: (workoutId: string) => void;
+  onDeleteSection?: () => void;
 }
 
 export default function ExerciseSectionCard({
@@ -30,6 +31,7 @@ export default function ExerciseSectionCard({
   workouts,
   onAddWorkout,
   onDeleteWorkout,
+  onDeleteSection,
 }: ExerciseSectionCardProps) {
   const [isOpen, setIsOpen] = useState(false);
   const completedSets = workouts.reduce((sum, w) => sum + w.sets, 0);
@@ -42,9 +44,21 @@ export default function ExerciseSectionCard({
             <Dumbbell className="h-5 w-5 text-primary" />
             {sectionName}
           </CardTitle>
-          <Badge variant="secondary" className="font-display">
-            {completedSets}/{targetSets} sets
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="font-display">
+              {completedSets}/{targetSets} sets
+            </Badge>
+            {onDeleteSection && (
+              <button
+                onClick={onDeleteSection}
+                className="p-1 text-muted-foreground hover:text-destructive transition-colors"
+                aria-label="Delete section"
+                data-testid={`button-delete-section-${sectionName.toLowerCase()}`}
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">

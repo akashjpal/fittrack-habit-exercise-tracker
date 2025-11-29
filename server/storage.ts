@@ -69,10 +69,11 @@ export class MemStorage implements IStorage {
   private async createWorkoutSync(workout: InsertWorkout, date?: Date): Promise<Workout> {
     console.log("Creating workout:", workout, "with date:", date);
     const id = randomUUID();
+    const workoutDate = workout.date ? workout.date : (date ? date.toISOString() : new Date().toISOString());
     const newWorkout: Workout = {
       ...workout,
       id,
-      date: date ? date.toISOString() : new Date().toISOString(),
+      date: workoutDate,
     };
     try {
       console.log("Creating workout in DB:", newWorkout);
