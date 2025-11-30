@@ -67,14 +67,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.cookie("accessToken", accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
         maxAge: 15 * 60 * 1000, // 15 minutes
       });
 
       res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
 
@@ -136,20 +136,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
 
     res.json({ success: true });
-  });
-
-  app.get("/api/auth/me", authenticateToken, (req: AuthRequest, res) => {
-    res.json(req.user);
-  });
-
-  app.post("/api/auth/logout", (_req, res) => {
-    res.clearCookie("accessToken");
-    res.clearCookie("refreshToken");
-    res.sendStatus(200);
-  });
-
-  // --- Voice Log (Protected) ---
-  app.post("/api/voice-log", authenticateToken, upload.single("audio"), async (req: AuthRequest, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No audio file uploaded" });
