@@ -34,6 +34,13 @@ app.use(express.json({
 }));
 app.use(express.urlencoded({ extended: false }));
 
+import cors from "cors";
+app.use(cors({
+  origin: process.env.NODE_ENV === "production" ? false : "http://localhost:5173",
+  credentials: true,
+}));
+
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
