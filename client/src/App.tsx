@@ -13,19 +13,48 @@ import Landing from "@/pages/Landing";
 import Login from "@/pages/auth/Login";
 import Signup from "@/pages/auth/Signup";
 import ThemeToggle from "@/components/ThemeToggle";
-import { LayoutDashboard, Dumbbell, CheckSquare, TrendingUp, Brain } from "lucide-react";
+import { LayoutDashboard, Dumbbell, CheckSquare, TrendingUp, Brain, Loader2 } from "lucide-react";
+import { AuthProvider, useAuth } from "./lib/auth";
+
+function ProtectedRoute({ component: Component, path }: { component: React.ComponentType<any>, path: string }) {
+  const { user, isLoading } = useAuth();
+  const [, setLocation] = useLocation();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    // Redirect to login but keep the path? For now just simple redirect.
+    // Ideally we'd use a Redirect component or useEffect, but returning null + setLocation works in wouter often,
+    // though better to render a Redirect component if wouter has one, or just use effect.
+    // Wouter doesn't have a Redirect component built-in in v2 usually, but let's check.
+    // Safer to just render nothing and redirect.
+    setTimeout(() => setLocation("/login"), 0);
+    return null;
+  }
+
+  return <Route path={path} component={Component} />;
+}
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Landing} />
-      <Route path="/dashboard" component={Dashboard} />
       <Route path="/login" component={Login} />
       <Route path="/signup" component={Signup} />
-      <Route path="/exercises" component={Exercises} />
-      {/* <Route path="/habits" component={Habits} /> */}
-      <Route path="/progress" component={Progress} />
-      <Route path="/ai-fit-check" component={AIFitCheck} />
+
+      {/* Protected Routes */}
+      <ProtectedRoute path="/dashboard" component={Dashboard} />
+      <ProtectedRoute path="/exercises" component={Exercises} />
+      {/* <ProtectedRoute path="/habits" component={Habits} /> */}
+      <ProtectedRoute path="/progress" component={Progress} />
+      <ProtectedRoute path="/ai-fit-check" component={AIFitCheck} />
+
       <Route component={NotFound} />
     </Switch>
   );
@@ -33,9 +62,19 @@ function Router() {
 
 function Navigation() {
   const [location] = useLocation();
+  const { user, logout } = useAuth();
 
-  // Hide navigation on auth pages and landing page
-  if (['/', '/login', '/signup'].includes(location)) {
+  // Hide navigation on auth pages and landing page if not logged in
+  // Actually, landing page might show nav if logged in? 
+  // Requirement: "Dashboard, exercise, progress and ai fit check all are protected routes."
+  // Landing page is public.
+  if (['/', '/login', '/signup'].includes(location) && !user) {
+    return null;
+  }
+
+  // If on landing page but logged in, maybe show "Go to Dashboard"?
+  // For now, let's keep the original logic but check user presence too.
+  if (['/login', '/signup'].includes(location)) {
     return null;
   }
 
@@ -52,77 +91,103 @@ function Navigation() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center gap-8">
-            <Link href="/dashboard" className="flex items-center gap-2 hover-elevate px-2 py-1 rounded-md" data-testid="link-home">
+            <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-2 hover-elevate px-2 py-1 rounded-md" data-testid="link-home">
               <Dumbbell className="h-6 w-6 text-primary" />
               <span className="text-xl font-bold">FitTrack</span>
             </Link>
 
-            <nav className="hidden md:flex items-center gap-1">
-              {links.map((link) => {
-                const Icon = link.icon;
-                const isActive = location === link.path;
-                return (
-                  <Link
-                    key={link.path}
-                    href={link.path}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-colors hover-elevate ${isActive
-                      ? 'text-foreground bg-muted'
-                      : 'text-muted-foreground'
-                      }`}
-                    data-testid={`link-${link.label.toLowerCase()}`}
-                  >
-                    <Icon className="h-4 w-4" />
-                    {link.label}
-                  </Link>
-                );
-              })}
-            </nav>
+            {user && (
+              <nav className="hidden md:flex items-center gap-1">
+                {links.map((link) => {
+                  const Icon = link.icon;
+                  const isActive = location === link.path;
+                  return (
+                    <Link
+                      key={link.path}
+                      href={link.path}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-colors hover-elevate ${isActive
+                        ? 'text-foreground bg-muted'
+                        : 'text-muted-foreground'
+                        }`}
+                      data-testid={`link-${link.label.toLowerCase()}`}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {link.label}
+                    </Link>
+                  );
+                })}
+              </nav>
+            )}
           </div>
 
-          <ThemeToggle />
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            {user && (
+              <button
+                onClick={logout}
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Logout
+              </button>
+            )}
+          </div>
         </div>
 
-        <nav className="md:hidden flex items-center gap-1 pb-2 overflow-x-auto">
-          {links.map((link) => {
-            const Icon = link.icon;
-            const isActive = location === link.path;
-            return (
-              <Link
-                key={link.path}
-                href={link.path}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors hover-elevate ${isActive
-                  ? 'text-foreground bg-muted'
-                  : 'text-muted-foreground'
-                  }`}
-                data-testid={`link-mobile-${link.label.toLowerCase()}`}
-              >
-                <Icon className="h-4 w-4" />
-                {link.label}
-              </Link>
-            );
-          })}
-        </nav>
+        {user && (
+          <nav className="md:hidden flex items-center gap-1 pb-2 overflow-x-auto">
+            {links.map((link) => {
+              const Icon = link.icon;
+              const isActive = location === link.path;
+              return (
+                <Link
+                  key={link.path}
+                  href={link.path}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors hover-elevate ${isActive
+                    ? 'text-foreground bg-muted'
+                    : 'text-muted-foreground'
+                    }`}
+                  data-testid={`link-mobile-${link.label.toLowerCase()}`}
+                >
+                  <Icon className="h-4 w-4" />
+                  {link.label}
+                </Link>
+              );
+            })}
+          </nav>
+        )}
       </div>
     </header>
   );
 }
 
 function App() {
-  const [location] = useLocation();
-  const isAuthPage = ['/', '/login', '/signup'].includes(location);
-
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <div className="min-h-screen bg-background">
-          <Navigation />
-          <main className={isAuthPage ? "" : "container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-7xl"}>
-            <Router />
-          </main>
-        </div>
-        <Toaster />
-      </TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <div className="min-h-screen bg-background">
+            <Navigation />
+            <MainLayout />
+          </div>
+          <Toaster />
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
+  );
+}
+
+function MainLayout() {
+  const [location] = useLocation();
+  const isLanding = location === "/";
+
+  if (isLanding) {
+    return <Router />;
+  }
+
+  return (
+    <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-7xl">
+      <Router />
+    </main>
   );
 }
 

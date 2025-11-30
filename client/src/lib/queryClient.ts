@@ -7,6 +7,50 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+// Shared state for token refreshing
+let isRefreshing = false;
+let refreshPromise: Promise<void> | null = null;
+
+async function authenticatedFetch(url: string, options: RequestInit = {}): Promise<Response> {
+  const fetchOptions: RequestInit = {
+    ...options,
+    credentials: "include", // Always send cookies
+  };
+
+  let res = await fetch(url, fetchOptions);
+
+  // If unauthorized and not already trying to refresh (and not the refresh endpoint itself)
+  if (res.status === 401 && !url.endsWith("/api/auth/refresh")) {
+    if (!isRefreshing) {
+      isRefreshing = true;
+      refreshPromise = fetch("/api/auth/refresh", { method: "POST" })
+        .then(async (refreshRes) => {
+          if (!refreshRes.ok) {
+            throw new Error("Refresh failed");
+          }
+        })
+        .finally(() => {
+          isRefreshing = false;
+          refreshPromise = null;
+        });
+    }
+
+    if (refreshPromise) {
+      try {
+        await refreshPromise;
+        // Retry the original request
+        res = await fetch(url, fetchOptions);
+      } catch (error) {
+        // Refresh failed, redirect to login
+        window.dispatchEvent(new Event("unauthorized"));
+        return res;
+      }
+    }
+  }
+
+  return res;
+}
+
 export async function apiRequest(
   method: string,
   url: string,
@@ -15,11 +59,15 @@ export async function apiRequest(
   const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
   const fullUrl = url.startsWith("/") ? `${baseUrl}${url}` : url;
 
-  const res = await fetch(fullUrl, {
+  const headers: Record<string, string> = {};
+  if (data) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  const res = await authenticatedFetch(fullUrl, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers,
     body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
   });
 
   await throwIfResNotOk(res);
@@ -36,9 +84,7 @@ export const getQueryFn: <T>(options: {
       const url = queryKey.join("/") as string;
       const fullUrl = url.startsWith("/") ? `${baseUrl}${url}` : url;
 
-      const res = await fetch(fullUrl, {
-        credentials: "include",
-      });
+      const res = await authenticatedFetch(fullUrl);
 
       if (unauthorizedBehavior === "returnNull" && res.status === 401) {
         return null;
