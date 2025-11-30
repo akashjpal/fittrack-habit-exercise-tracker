@@ -136,6 +136,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
 
     res.json({ success: true });
+  });
+
+  // --- Voice Log (Protected) ---
+  app.post("/api/voice-log", authenticateToken, upload.single("audio"), async (req: AuthRequest, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No audio file uploaded" });
