@@ -23,7 +23,9 @@ async function authenticatedFetch(url: string, options: RequestInit = {}): Promi
   if (res.status === 401 && !url.endsWith("/api/auth/refresh")) {
     if (!isRefreshing) {
       isRefreshing = true;
-      refreshPromise = fetch("/api/auth/refresh", { method: "POST" })
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
+      const refreshUrl = `${baseUrl}/api/auth/refresh`;
+      refreshPromise = fetch(refreshUrl, { ...fetchOptions, method: "POST" })
         .then(async (refreshRes) => {
           if (!refreshRes.ok) {
             throw new Error("Refresh failed");
