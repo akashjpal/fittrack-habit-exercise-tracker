@@ -112,6 +112,7 @@ export default function VoiceLogger({ weekStart, weekEnd }: VoiceLoggerProps) {
             const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
             const response = await fetch(`${baseUrl}/api/voice-log`, {
                 method: "POST",
+                credentials: "include",
                 body: formData,
             });
 
