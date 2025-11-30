@@ -33,7 +33,8 @@ export default function VoiceLogger({ weekStart, weekEnd }: VoiceLoggerProps) {
     const { data: sections } = useQuery<ExerciseSection[]>({
         queryKey: ["/api/sections", weekStart, weekEnd],
         queryFn: () => {
-            const url = new URL(window.location.origin + "/api/sections");
+            const baseUrl = import.meta.env.VITE_API_BASE_URL || window.location.origin;
+            const url = new URL(baseUrl + "/api/sections");
             url.searchParams.set("startDate", weekStart.toISOString());
             url.searchParams.set("endDate", weekEnd.toISOString());
             return apiRequest("GET", url.toString()).then(res => res.json());
@@ -108,7 +109,8 @@ export default function VoiceLogger({ weekStart, weekEnd }: VoiceLoggerProps) {
         formData.append("date", workoutDate.toISOString());
 
         try {
-            const response = await fetch("/api/voice-log", {
+            const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
+            const response = await fetch(`${baseUrl}/api/voice-log`, {
                 method: "POST",
                 body: formData,
             });

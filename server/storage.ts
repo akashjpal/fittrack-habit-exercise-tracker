@@ -8,116 +8,73 @@ import {
   type InsertHabit,
   type HabitCompletion,
   type InsertHabitCompletion,
+  type User,
+  type InsertUser,
 } from "@shared/schema";
 import { startOfDay, subDays } from "date-fns";
 import { DbHelper } from "./dbHelper";
 
 export interface IStorage {
+  // Users
+  getUserByUsername(username: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
+  migrateOrphanedData(userId: string): Promise<void>;
+
   // Exercise Sections
-  getAllSections(): Promise<ExerciseSection[]>;
-  getSectionsByWeek(startDate: string, endDate: string): Promise<ExerciseSection[]>;
+  getAllSections(userId: string): Promise<ExerciseSection[]>;
+  getSectionsByWeek(startDate: string, endDate: string, userId: string): Promise<ExerciseSection[]>;
   getSectionById(id: string): Promise<ExerciseSection | undefined>;
-  createSection(section: InsertExerciseSection): Promise<ExerciseSection>;
+  createSection(section: InsertExerciseSection & { userId: string }): Promise<ExerciseSection>;
   deleteSection(id: string): Promise<void>;
 
   // Workouts
-  getAllWorkouts(): Promise<Workout[]>;
+  getAllWorkouts(userId: string): Promise<Workout[]>;
   getWorkoutsBySection(sectionId: string): Promise<Workout[]>;
-  getWorkoutsByWeek(startDate: string, endDate: string): Promise<Workout[]>;
-  createWorkout(workout: InsertWorkout): Promise<Workout>;
+  getWorkoutsByWeek(startDate: string, endDate: string, userId: string): Promise<Workout[]>;
+  createWorkout(workout: InsertWorkout & { userId: string }): Promise<Workout>;
   deleteWorkout(id: string): Promise<void>;
 
   // Habits
-  getAllHabits(): Promise<Habit[]>;
+  getAllHabits(userId: string): Promise<Habit[]>;
   getHabitById(id: string): Promise<Habit | undefined>;
-  createHabit(habit: InsertHabit): Promise<Habit>;
+  createHabit(habit: InsertHabit & { userId: string }): Promise<Habit>;
   deleteHabit(id: string): Promise<void>;
 
   // Habit Completions
   getHabitCompletions(habitId: string): Promise<HabitCompletion[]>;
-  getAllCompletions(): Promise<HabitCompletion[]>;
-  createCompletion(completion: InsertHabitCompletion): Promise<HabitCompletion>;
+  getAllCompletions(userId: string): Promise<HabitCompletion[]>;
+  createCompletion(completion: InsertHabitCompletion & { userId: string }): Promise<HabitCompletion>;
   deleteCompletion(habitId: string, dateString: string): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
-  private sections: Map<string, ExerciseSection>;
-  private workouts: Map<string, Workout>;
-  private habits: Map<string, Habit>;
-  private completions: Map<string, HabitCompletion>;
-
-  constructor() {
-    this.sections = new Map();
-    this.workouts = new Map();
-    this.habits = new Map();
-    this.completions = new Map();
-  }
-
-  private async createSectionSync(section: InsertExerciseSection): Promise<ExerciseSection> {
-    const id = randomUUID();
-    const newSection: ExerciseSection = {
-      ...section,
-      id,
-      createdAt: new Date().toISOString(),
-      date: section.date // Ensure date is passed
-    };
-    await DbHelper.createExerciseSection(newSection);
-    return newSection;
-  }
-
-  // TODO: Create workout linked to DB -> need to check
-  private async createWorkoutSync(workout: InsertWorkout, date?: Date): Promise<Workout> {
-    console.log("Creating workout:", workout, "with date:", date);
-    const id = randomUUID();
-    const workoutDate = workout.date ? workout.date : (date ? date.toISOString() : new Date().toISOString());
-    const newWorkout: Workout = {
-      ...workout,
-      id,
-      date: workoutDate,
-    };
+  // Users
+  async getUserByUsername(username: string): Promise<User | undefined> {
     try {
-      console.log("Creating workout in DB:", newWorkout);
-      await DbHelper.createWorkout(newWorkout);
-      return newWorkout;
-    }
-    catch (err) {
-      console.error("Error creating workout in DB:", err);
-      throw err;
+      const doc = await DbHelper.getUserByUsername(username);
+      if (!doc) return undefined;
+      return { ...doc, id: doc.$id } as unknown as User;
+    } catch (err) {
+      return undefined;
     }
   }
 
-  // working
-  private async createHabitSync(habit: InsertHabit): Promise<Habit> {
-    const id = randomUUID();
-    const newHabit: Habit = {
-      ...habit,
-      id,
-      createdAt: new Date().toISOString(),
-    };
-    await DbHelper.createHabit(newHabit);
-    return newHabit;
+  async createUser(user: InsertUser): Promise<User> {
+    const doc = await DbHelper.createUser({
+      username: user.username,
+      passwordHash: user.password,
+    });
+    return { ...doc, id: doc.$id } as unknown as User;
   }
 
-  // TODO: Need to check
-  private async createCompletionSync(completion: InsertHabitCompletion): Promise<HabitCompletion> {
-    const id = randomUUID();
-    const completionDate = typeof completion.date === 'string'
-      ? new Date(completion.date)
-      : completion.date;
-    const newCompletion: HabitCompletion = {
-      id,
-      habitId: completion.habitId,
-      date: startOfDay(completionDate).toISOString(),
-    };
-    await DbHelper.createHabitCompletion(newCompletion);
-    console.log("Habbit completion created:", newCompletion);
-    return newCompletion;
+  async migrateOrphanedData(userId: string): Promise<void> {
+    await DbHelper.migrateOrphanedData(userId);
   }
 
   // Exercise Sections
-  async getAllSections(): Promise<ExerciseSection[]> {
+  async getAllSections(userId: string): Promise<ExerciseSection[]> {
     try {
-      const result = await DbHelper.getAllExerciseSections();
+      const result = await DbHelper.getAllExerciseSections(userId);
       return result.documents.map(doc => ({
         ...doc,
         id: doc.$id,
@@ -131,9 +88,9 @@ export class MemStorage implements IStorage {
     }
   }
 
-  async getSectionsByWeek(startDate: string, endDate: string): Promise<ExerciseSection[]> {
+  async getSectionsByWeek(startDate: string, endDate: string, userId: string): Promise<ExerciseSection[]> {
     try {
-      const result = await DbHelper.getExerciseSectionsByWeek(startDate, endDate);
+      const result = await DbHelper.getExerciseSectionsByWeek(startDate, endDate, userId);
       return result.documents.map(doc => ({
         ...doc,
         id: doc.$id,
@@ -158,8 +115,14 @@ export class MemStorage implements IStorage {
     }
   }
 
-  async createSection(section: InsertExerciseSection): Promise<ExerciseSection> {
-    return this.createSectionSync(section);
+  async createSection(section: InsertExerciseSection & { userId: string }): Promise<ExerciseSection> {
+    const newSection = await DbHelper.createExerciseSection({
+      name: section.name,
+      targetSets: section.targetSets,
+      date: section.date,
+      userId: section.userId
+    });
+    return { ...newSection, id: newSection.$id } as unknown as ExerciseSection;
   }
 
   async deleteSection(id: string): Promise<void> {
@@ -172,10 +135,10 @@ export class MemStorage implements IStorage {
     }
   }
 
-  // Workouts -> completed
-  async getAllWorkouts(): Promise<Workout[]> {
+  // Workouts
+  async getAllWorkouts(userId: string): Promise<Workout[]> {
     try {
-      const result = await DbHelper.getWorkout();
+      const result = await DbHelper.getWorkout(userId);
       return result.documents.map(doc => ({ ...doc, id: doc.$id })) as unknown as Workout[];
     } catch (err) {
       console.error("Error fetching workouts from DB:", err);
@@ -186,7 +149,6 @@ export class MemStorage implements IStorage {
   async getWorkoutsBySection(sectionId: string): Promise<Workout[]> {
     try {
       const result = await DbHelper.getWorkoutsBySection(sectionId);
-      console.log(result);
       return result.documents.map(doc => ({ ...doc, id: doc.$id })) as unknown as Workout[];
     }
     catch (err) {
@@ -194,9 +156,9 @@ export class MemStorage implements IStorage {
       throw err;
     }
   }
-  async getWorkoutsByWeek(startDate: string, endDate: string): Promise<Workout[]> {
+  async getWorkoutsByWeek(startDate: string, endDate: string, userId: string): Promise<Workout[]> {
     try {
-      const result = await DbHelper.getWorkoutsByWeek(startDate, endDate);
+      const result = await DbHelper.getWorkoutsByWeek(startDate, endDate, userId);
       return result.documents.map(doc => ({ ...doc, id: doc.$id })) as unknown as Workout[];
     }
     catch (err) {
@@ -205,9 +167,19 @@ export class MemStorage implements IStorage {
     }
   }
 
-  // TODO: Need to check
-  async createWorkout(workout: InsertWorkout): Promise<Workout> {
-    return this.createWorkoutSync(workout);
+  async createWorkout(workout: InsertWorkout & { userId: string }): Promise<Workout> {
+    const workoutDate = workout.date || new Date().toISOString();
+    const newWorkout = await DbHelper.createWorkout({
+      sectionId: workout.sectionId,
+      exerciseType: workout.exerciseType,
+      sets: workout.sets,
+      reps: workout.reps,
+      weight: workout.weight,
+      unit: workout.unit,
+      date: workoutDate,
+      userId: workout.userId
+    });
+    return { ...newWorkout, id: newWorkout.$id } as unknown as Workout;
   }
 
   async deleteWorkout(id: string): Promise<void> {
@@ -220,10 +192,10 @@ export class MemStorage implements IStorage {
     }
   }
 
-  // Habits -> done
-  async getAllHabits(): Promise<Habit[]> {
+  // Habits
+  async getAllHabits(userId: string): Promise<Habit[]> {
     try {
-      const result = await DbHelper.getAllHabits();
+      const result = await DbHelper.getAllHabits(userId);
       return result.documents.map(doc => ({ ...doc, id: doc.$id })) as unknown as Habit[];
     }
     catch (err) {
@@ -243,18 +215,16 @@ export class MemStorage implements IStorage {
     }
   }
 
-  async createHabit(habit: InsertHabit): Promise<Habit> {
-    return this.createHabitSync(habit);
+  async createHabit(habit: InsertHabit & { userId: string }): Promise<Habit> {
+    const newHabit = await DbHelper.createHabit({
+      name: habit.name,
+      frequency: habit.frequency,
+      userId: habit.userId
+    });
+    return { ...newHabit, id: newHabit.$id } as unknown as Habit;
   }
 
   async deleteHabit(id: string): Promise<void> {
-    this.habits.delete(id);
-    // Also delete associated completions
-    for (const [completionId, completion] of Array.from(this.completions.entries())) {
-      if (completion.habitId === id) {
-        this.completions.delete(completionId);
-      }
-    }
     try {
       await DbHelper.deleteHabit(id);
     }
@@ -264,7 +234,7 @@ export class MemStorage implements IStorage {
     }
   }
 
-  // Habit Completions -> done
+  // Habit Completions
   async getHabitCompletions(habitId: string): Promise<HabitCompletion[]> {
     try {
       const result = await DbHelper.getHabitCompletion(habitId);
@@ -276,9 +246,9 @@ export class MemStorage implements IStorage {
     }
   }
 
-  async getAllCompletions(): Promise<HabitCompletion[]> {
+  async getAllCompletions(userId: string): Promise<HabitCompletion[]> {
     try {
-      const result = await DbHelper.getAllHabitCompletions();
+      const result = await DbHelper.getAllHabitCompletions(userId);
       return result.documents.map(doc => ({ ...doc, id: doc.$id })) as unknown as HabitCompletion[];
     }
     catch (err) {
@@ -287,8 +257,17 @@ export class MemStorage implements IStorage {
     }
   }
 
-  async createCompletion(completion: InsertHabitCompletion): Promise<HabitCompletion> {
-    return this.createCompletionSync(completion);
+  async createCompletion(completion: InsertHabitCompletion & { userId: string }): Promise<HabitCompletion> {
+    const completionDate = typeof completion.date === 'string'
+      ? new Date(completion.date)
+      : completion.date;
+
+    const newCompletion = await DbHelper.createHabitCompletion({
+      habitId: completion.habitId,
+      date: startOfDay(completionDate).toISOString(),
+      userId: completion.userId
+    });
+    return { ...newCompletion, id: newCompletion.$id } as unknown as HabitCompletion;
   }
 
   async deleteCompletion(habitId: string, dateString: string): Promise<void> {

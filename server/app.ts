@@ -34,9 +34,12 @@ app.use(express.json({
 }));
 app.use(express.urlencoded({ extended: false }));
 
+import cookieParser from "cookie-parser";
+app.use(cookieParser());
+
 import cors from "cors";
 app.use(cors({
-  origin: process.env.NODE_ENV === "production" ? false : "http://localhost:5173",
+  origin: ["http://localhost:5173", process.env.CLIENT_URL || ""],
   credentials: true,
 }));
 

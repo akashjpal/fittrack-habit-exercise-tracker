@@ -2,19 +2,22 @@ import type { Express } from "express";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { storage } from "./storage";
 
+import { authenticateToken, AuthRequest } from "./auth";
+
 export function registerAIRoutes(app: Express) {
     // Initialize Gemini
     // Note: Ensure GEMINI_API_KEY is set in your .env file
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
     const model = genAI.getGenerativeModel({ model: "models/gemini-2.5-flash" });
 
-    app.post("/api/ai/fit-check", async (req, res) => {
+    app.post("/api/ai/fit-check", authenticateToken, async (req: AuthRequest, res) => {
         try {
+            const userId = req.user!.id;
             // Fetch user data for context
-            const workouts = await storage.getAllWorkouts();
-            const sections = await storage.getAllSections();
-            const habits = await storage.getAllHabits();
-            const completions = await storage.getAllCompletions();
+            const workouts = await storage.getAllWorkouts(userId);
+            const sections = await storage.getAllSections(userId);
+            const habits = await storage.getAllHabits(userId);
+            const completions = await storage.getAllCompletions(userId);
 
             // Prepare context string
             // We limit the data to avoid hitting token limits if the history is huge
