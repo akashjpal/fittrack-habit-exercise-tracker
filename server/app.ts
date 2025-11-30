@@ -38,6 +38,7 @@ import cookieParser from "cookie-parser";
 app.use(cookieParser());
 
 import cors from "cors";
+console.log(process.env.CLIENT_URL);
 app.use(cors({
   origin: ["http://localhost:5173", process.env.CLIENT_URL || ""],
   credentials: true,
