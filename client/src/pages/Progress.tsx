@@ -27,7 +27,8 @@ export default function Progress() {
   const { data, isLoading } = useQuery<ProgressData>({
     queryKey: ["/api/analytics/progress", trendStart, trendEnd],
     queryFn: () => {
-      const url = new URL(window.location.origin + "/api/analytics/progress");
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || window.location.origin;
+      const url = new URL(baseUrl + "/api/analytics/progress");
       url.searchParams.set("startDate", trendStart.toISOString());
       url.searchParams.set("endDate", trendEnd.toISOString());
       return apiRequest("GET", url.toString()).then(res => res.json());
