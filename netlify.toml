@@ -2,6 +2,13 @@
   publish = "dist/public"
   command = "npm run build:client"
 
+[[headers]]
+  for = "/api/*"
+  [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate, proxy-revalidate"
+    Pragma = "no-cache"
+    Expires = "0"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
