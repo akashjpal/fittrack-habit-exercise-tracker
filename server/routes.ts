@@ -66,15 +66,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.cookie("accessToken", accessToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+        secure: true,
+        sameSite: "none",
         maxAge: 15 * 60 * 1000, // 15 minutes
       });
 
       res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+        secure: true,
+        sameSite: "none",
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
 
@@ -102,15 +102,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.cookie("accessToken", accessToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        secure: true,
+        sameSite: "none",
         maxAge: 15 * 60 * 1000, // 15 minutes
       });
 
       res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        secure: true,
+        sameSite: "none",
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
 
@@ -120,22 +120,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/auth/refresh", (req, res) => {
-    const refreshToken = req.cookies.refreshToken;
+  app.post("/api/auth/refresh", async (req, res) => {
+    const refreshToken = req.cookies.refreshToken || req.body.refreshToken;
     if (!refreshToken) return res.sendStatus(401);
 
-    const user = verifyRefreshToken(refreshToken);
-    if (!user) return res.sendStatus(403);
+    const payload = verifyRefreshToken(refreshToken);
+    if (!payload) return res.sendStatus(403);
 
-    const accessToken = generateAccessToken(user);
-    res.cookie("accessToken", accessToken, {
+    const user = await storage.getUserByUsername(payload.username);
+    if (!user || user.id !== payload.id) return res.sendStatus(403);
+
+    const newAccessToken = generateAccessToken(user);
+
+    res.cookie("accessToken", newAccessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      secure: true,
+      sameSite: "none",
       maxAge: 15 * 60 * 1000, // 15 minutes
     });
 
-    res.json({ success: true });
+    res.json({ message: "Token refreshed" });
   });
 
   // --- Voice Log (Protected) ---
