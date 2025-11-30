@@ -58,9 +58,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const hashedPassword = await hashPassword(userData.password);
       const user = await storage.createUser({ ...userData, password: hashedPassword });
 
-      // Migrate orphaned data to this first user (or any new user, based on logic)
-      // await storage.migrateOrphanedData(user.id);
-
       const accessToken = generateAccessToken(user);
       const refreshToken = generateRefreshToken(user);
 
@@ -140,6 +137,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
 
     res.json({ message: "Token refreshed" });
+  });
+
+  app.get("/api/auth/me", authenticateToken, (req: AuthRequest, res) => {
+    if (!req.user) return res.sendStatus(401);
+    res.json({ id: req.user.id, username: req.user.username });
+  });
+
+  app.post("/api/auth/logout", (req, res) => {
+    res.clearCookie("accessToken");
+    res.clearCookie("refreshToken");
+    res.json({ message: "Logged out successfully" });
   });
 
   // --- Voice Log (Protected) ---
