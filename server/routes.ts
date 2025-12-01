@@ -151,7 +151,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // --- Voice Log (Protected) ---
-  app.post("/api/voice-log", authenticateToken, upload.single("audio"), async (req: AuthRequest, res) => {
+app.post(
+  "/api/voice-log",
+  authenticateToken,
+  upload.single("audio"),
+  async (req: AuthRequest, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No audio file uploaded" });
@@ -159,59 +163,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log("Received audio file:", req.file.path);
 
-      // 1. Send to ElevenLabs STT
-      const formData = new FormData();
-      formData.append("file", fs.createReadStream(req.file.path));
-      formData.append("model_id", "scribe_v1");
+      // 1️⃣ Read the audio file
+      const audioBytes = fs.readFileSync(req.file.path);
+      const base64Audio = audioBytes.toString("base64");
 
-      console.log("Sending to ElevenLabs...");
-      const sttResponse = await axios.post(
-        "https://api.elevenlabs.io/v1/speech-to-text",
-        formData,
-        {
-          headers: {
-            ...formData.getHeaders(),
-            "xi-api-key": process.env.ELEVENLABS_API_KEY,
-          },
-        }
-      );
-
-      const transcribedText = sttResponse.data.text;
-      console.log("Transcribed Text:", transcribedText);
-
-      // 2. Send to Gemini for parsing
+      // 2️⃣ Setup Gemini
       const { GoogleGenerativeAI } = await import("@google/generative-ai");
-      const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
-      const model = genAI.getGenerativeModel({ model: "models/gemini-2.5-flash" });
+      const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+      const model = genAI.getGenerativeModel({
+        model: "models/gemini-2.5-flash", // supports audio + text
+      });
 
-      const prompt = `
-        Extract workout data from the following text: "${transcribedText}"
-        
-        Return a JSON object with the following structure:
+      console.log("Sending audio to Gemini…");
+
+      // 3️⃣ Gemini — transcription + structured JSON extraction (1 request)
+      const result = await model.generateContent([
         {
-          "workouts": [
-            {
-              "exerciseName": "Exercise Name",
-              "sets": number,
-              "reps": number,
-              "weight": number (optional, 0 if not specified),
-              "unit": string (optional, "lbs" or "kgs", default "lbs"),
-              "rpe": number (optional, 0 if not specified)
-            }
-          ]
-        }
-        If multiple exercises are mentioned, include them all in the array.
-        Standardize exercise names where possible (e.g., "bench" -> "Bench Press").
-        Return ONLY valid JSON.
-      `;
+          inlineData: {
+            mimeType: req.file.mimetype, // e.g., audio/webm
+            data: base64Audio,
+          },
+        },
+        {
+          text: `
+You will receive workout voice logs.
 
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const text = response.text();
-      const jsonStr = text.replace(/```json/g, "").replace(/```/g, "").trim();
+Step 1 — TRANSCRIBE the audio.
+Step 2 — Extract workout data from the transcription.
+
+Return ONLY this JSON:
+{
+  "workouts": [
+    {
+      "exerciseName": "Exercise Name",
+      "sets": number,
+      "reps": number,
+      "weight": number,
+      "unit": "lbs" | "kgs",
+      "rpe": number
+    }
+  ]
+}
+
+Rules:
+- If weight not mentioned → 0
+- If rpe not mentioned → 0
+- Standardize names (e.g., "bench" → "Bench Press")
+- NO explanation, ONLY valid JSON
+          `,
+        },
+      ]);
+
+      const responseText = result.response.text();
+      console.log("Gemini Raw Output:", responseText);
+
+      // 4️⃣ Clean JSON
+      const jsonStr = responseText
+        .replace(/```json/g, "")
+        .replace(/```/g, "")
+        .trim();
+
       const parsedData = JSON.parse(jsonStr);
 
-      // 3. Save to Database
+      // 5️⃣ Save to DB
       const savedWorkouts = [];
       const requestedSectionId = req.body.sectionId;
       const userId = req.user!.id;
@@ -219,7 +233,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const w of parsedData.workouts) {
         let sectionId = requestedSectionId;
 
-        // If no sectionId provided (fallback), find or create a default one
         if (!sectionId) {
           let sections = await storage.getAllSections(userId);
           sectionId = sections[0]?.id;
@@ -229,40 +242,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
               name: "Voice Logged",
               targetSets: 10,
               date: new Date().toISOString(),
-              userId
+              userId,
             });
             sectionId = newSection.id;
           }
         }
 
         const workoutData = {
-          sectionId: sectionId,
+          sectionId,
           exerciseType: w.exerciseName,
           sets: w.sets,
           reps: w.reps,
           weight: Number(w.weight) || 0,
           unit: w.unit || "lbs",
           date: req.body.date || new Date().toISOString(),
-          userId
+          userId,
         };
 
         const saved = await storage.createWorkout(workoutData);
         savedWorkouts.push(saved);
       }
 
-      // Cleanup uploaded file
+      // 6️⃣ Delete uploaded file
       fs.unlinkSync(req.file.path);
 
       res.json({
-        transcription: transcribedText,
-        workouts: savedWorkouts
+        transcription: "Transcription done by Gemini internally",
+        workouts: savedWorkouts,
       });
-
     } catch (error: any) {
-      console.error("Voice Log Error:", error.response?.data || error.message);
-      res.status(500).json({ error: error.message || "Failed to process voice log" });
+      console.error(
+        "Voice Log Error:",
+        error.response?.data || error.message
+      );
+      res
+        .status(500)
+        .json({ error: error.message || "Failed to process voice log" });
     }
-  });
+  }
+);
+
 
   // --- Exercise Sections (Protected) ---
   app.get("/api/sections", authenticateToken, async (req: AuthRequest, res) => {
