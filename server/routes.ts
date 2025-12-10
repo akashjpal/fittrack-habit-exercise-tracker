@@ -151,41 +151,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // --- Voice Log (Protected) ---
-app.post(
-  "/api/voice-log",
-  authenticateToken,
-  upload.single("audio"),
-  async (req: AuthRequest, res) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({ error: "No audio file uploaded" });
-      }
+  app.post(
+    "/api/voice-log",
+    authenticateToken,
+    upload.single("audio"),
+    async (req: AuthRequest, res) => {
+      try {
+        if (!req.file) {
+          return res.status(400).json({ error: "No audio file uploaded" });
+        }
 
-      console.log("Received audio file:", req.file.path);
+        console.log("Received audio file:", req.file.path);
 
-      // 1️⃣ Read the audio file
-      const audioBytes = fs.readFileSync(req.file.path);
-      const base64Audio = audioBytes.toString("base64");
+        // 1️⃣ Read the audio file
+        const audioBytes = fs.readFileSync(req.file.path);
+        const base64Audio = audioBytes.toString("base64");
 
-      // 2️⃣ Setup Gemini
-      const { GoogleGenerativeAI } = await import("@google/generative-ai");
-      const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-      const model = genAI.getGenerativeModel({
-        model: "models/gemini-2.5-flash", // supports audio + text
-      });
+        // 2️⃣ Setup Gemini
+        const { GoogleGenerativeAI } = await import("@google/generative-ai");
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+        const model = genAI.getGenerativeModel({
+          model: "models/gemini-2.5-flash", // supports audio + text
+        });
 
-      console.log("Sending audio to Gemini…");
+        console.log("Sending audio to Gemini…");
 
-      // 3️⃣ Gemini — transcription + structured JSON extraction (1 request)
-      const result = await model.generateContent([
-        {
-          inlineData: {
-            mimeType: req.file.mimetype, // e.g., audio/webm
-            data: base64Audio,
+        // 3️⃣ Gemini — transcription + structured JSON extraction (1 request)
+        const result = await model.generateContent([
+          {
+            inlineData: {
+              mimeType: req.file.mimetype, // e.g., audio/webm
+              data: base64Audio,
+            },
           },
-        },
-        {
-          text: `
+          {
+            text: `
 You will receive workout voice logs.
 
 Step 1 — TRANSCRIBE the audio.
@@ -211,76 +211,154 @@ Rules:
 - Standardize names (e.g., "bench" → "Bench Press")
 - NO explanation, ONLY valid JSON
           `,
-        },
-      ]);
+          },
+        ]);
 
-      const responseText = result.response.text();
-      console.log("Gemini Raw Output:", responseText);
+        const responseText = result.response.text();
+        console.log("Gemini Raw Output:", responseText);
 
-      // 4️⃣ Clean JSON
-      const jsonStr = responseText
-        .replace(/```json/g, "")
-        .replace(/```/g, "")
-        .trim();
+        // 4️⃣ Clean JSON
+        const jsonStr = responseText
+          .replace(/```json/g, "")
+          .replace(/```/g, "")
+          .trim();
 
-      const parsedData = JSON.parse(jsonStr);
+        const parsedData = JSON.parse(jsonStr);
 
-      // 5️⃣ Save to DB
-      const savedWorkouts = [];
-      const requestedSectionId = req.body.sectionId;
-      const userId = req.user!.id;
+        // 5️⃣ Save to DB
+        const savedWorkouts = [];
+        const requestedSectionId = req.body.sectionId;
+        const userId = req.user!.id;
 
-      for (const w of parsedData.workouts) {
-        let sectionId = requestedSectionId;
-
-        if (!sectionId) {
-          let sections = await storage.getAllSections(userId);
-          sectionId = sections[0]?.id;
+        for (const w of parsedData.workouts) {
+          let sectionId = requestedSectionId;
 
           if (!sectionId) {
-            const newSection = await storage.createSection({
-              name: "Voice Logged",
-              targetSets: 10,
-              date: new Date().toISOString(),
-              userId,
-            });
-            sectionId = newSection.id;
+            let sections = await storage.getAllSections(userId);
+            sectionId = sections[0]?.id;
+
+            if (!sectionId) {
+              const newSection = await storage.createSection({
+                name: "Voice Logged",
+                targetSets: 10,
+                date: new Date().toISOString(),
+                userId,
+              });
+              sectionId = newSection.id;
+            }
           }
+
+          const workoutData = {
+            sectionId,
+            exerciseType: w.exerciseName,
+            sets: w.sets,
+            reps: w.reps,
+            weight: Number(w.weight) || 0,
+            unit: w.unit || "lbs",
+            date: req.body.date || new Date().toISOString(),
+            userId,
+          };
+
+          const saved = await storage.createWorkout(workoutData);
+          savedWorkouts.push(saved);
         }
 
+        // 6️⃣ Delete uploaded file
+        fs.unlinkSync(req.file.path);
+
+        res.json({
+          transcription: "Transcription done by Gemini internally",
+          workouts: savedWorkouts,
+        });
+      } catch (error: any) {
+        console.error(
+          "Voice Log Error:",
+          error.response?.data || error.message
+        );
+        res
+          .status(500)
+          .json({ error: error.message || "Failed to process voice log" });
+      }
+    }
+  );
+
+  // --- Workout Generator (Protected) ---
+  app.post("/api/ai/generate-workout", authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const prompt = req.body.prompt;
+      if (!prompt) {
+        return res.status(400).json({ error: "Prompt is required" });
+      }
+
+      console.log("Generating workout for prompt:", prompt);
+
+      const { GoogleGenerativeAI } = await import("@google/generative-ai");
+      const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+      const model = genAI.getGenerativeModel({ model: "models/gemini-2.5-flash" });
+
+      const result = await model.generateContent(`
+        You are an expert fitness coach.
+        Create a workout plan based on this request: "${prompt}"
+
+        Return ONLY valid JSON in this format:
+        {
+          "workoutName": "Short descriptive title",
+          "exercises": [
+            {
+              "name": "Exercise Name",
+              "sets": number,
+              "reps": number,
+              "weight": number (estimate for intermediate male, default 0 if bodyweight),
+              "unit": "kg",
+              "notes": "Short form tip"
+            }
+          ]
+        }
+        NO markdown formatting, just raw JSON.
+      `);
+
+      const responseText = result.response.text();
+      const jsonStr = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
+      const plan = JSON.parse(jsonStr);
+
+      res.json(plan);
+    } catch (error: any) {
+      console.error("Workout Generator Error:", error);
+      res.status(500).json({ error: error.message || "Failed to generate workout" });
+    }
+  });
+
+  app.post("/api/workouts/batch", authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const { sectionId, workouts } = req.body;
+      const userId = req.user!.id;
+
+      if (!sectionId || !workouts || !Array.isArray(workouts)) {
+        return res.status(400).json({ error: "Invalid batch data" });
+      }
+
+      const savedWorkouts = [];
+      for (const w of workouts) {
         const workoutData = {
           sectionId,
-          exerciseType: w.exerciseName,
-          sets: w.sets,
-          reps: w.reps,
-          weight: Number(w.weight) || 0,
-          unit: w.unit || "lbs",
-          date: req.body.date || new Date().toISOString(),
+          exerciseType: w.name || w.exerciseType,
+          sets: Number(w.sets) || 0,
+          reps: Number(w.reps) || 0,
+          weight: Math.round(Number(w.weight) || 0), // Appwrite requires integer
+          unit: w.unit || "kg",
           userId,
+          date: new Date().toISOString() // Or pass date from frontend
         };
-
         const saved = await storage.createWorkout(workoutData);
         savedWorkouts.push(saved);
       }
 
-      // 6️⃣ Delete uploaded file
-      fs.unlinkSync(req.file.path);
-
-      res.json({
-        transcription: "Transcription done by Gemini internally",
-        workouts: savedWorkouts,
-      });
+      res.json({ success: true, count: savedWorkouts.length });
     } catch (error: any) {
-      console.error(
-        "Voice Log Error:",
-        error.response?.data || error.message
-      );
-      res
-        .status(500)
-        .json({ error: error.message || "Failed to process voice log" });
+      console.error("Batch Save Error:", error);
+      res.status(500).json({ error: error.message });
     }
-  }
-);
+  });
 
 
   // --- Exercise Sections (Protected) ---

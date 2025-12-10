@@ -12,8 +12,9 @@ import AIFitCheck from "@/pages/AIFitCheck";
 import Landing from "@/pages/Landing";
 import Login from "@/pages/auth/Login";
 import Signup from "@/pages/auth/Signup";
+import WorkoutGenerator from "@/pages/WorkoutGenerator";
 import ThemeToggle from "@/components/ThemeToggle";
-import { LayoutDashboard, Dumbbell, CheckSquare, TrendingUp, Brain, Loader2 } from "lucide-react";
+import { LayoutDashboard, Dumbbell, CheckSquare, TrendingUp, Brain, Loader2, Sparkles } from "lucide-react";
 import { AuthProvider, useAuth } from "./lib/auth";
 
 function ProtectedRoute({ component: Component, path }: { component: React.ComponentType<any>, path: string }) {
@@ -53,7 +54,9 @@ function Router() {
       <ProtectedRoute path="/exercises" component={Exercises} />
       {/* <ProtectedRoute path="/habits" component={Habits} /> */}
       <ProtectedRoute path="/progress" component={Progress} />
+      <ProtectedRoute path="/progress" component={Progress} />
       <ProtectedRoute path="/ai-fit-check" component={AIFitCheck} />
+      <ProtectedRoute path="/workout-generator" component={WorkoutGenerator} />
 
       <Route component={NotFound} />
     </Switch>
@@ -83,6 +86,7 @@ function Navigation() {
     { path: "/exercises", label: "Exercises", icon: Dumbbell },
     // { path: "/habits", label: "Habits", icon: CheckSquare },
     { path: "/progress", label: "Progress", icon: TrendingUp },
+    { path: "/workout-generator", label: "Generator", icon: Sparkles },
     { path: "/ai-fit-check", label: "AI Fit Check", icon: Brain },
   ];
 
