@@ -332,6 +332,50 @@ Rules:
     }
   });
 
+  app.post("/api/ai/generate-habits", authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const prompt = req.body.prompt;
+      if (!prompt) {
+        return res.status(400).json({ error: "Prompt is required" });
+      }
+
+      console.log("Generating habits for prompt:", prompt);
+
+      const { GoogleGenerativeAI } = await import("@google/generative-ai");
+      const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+      // Use flash model for speed
+      const model = genAI.getGenerativeModel({ model: "models/gemini-2.5-flash" });
+
+      const result = await model.generateContent(`
+        You are a habit formation expert.
+        The user wants to build a routine based on this request: "${prompt}"
+
+        Generate a list of 3 to 6 actionable, specific daily habits.
+        
+        Return a JSON object with this structure:
+        {
+          "habits": [
+            "Drink 500ml water immediately after waking up",
+            "Read 10 pages of a book",
+            ...
+          ]
+        }
+        Return ONLY valid JSON. No markdown formatting.
+      `);
+
+      const responseText = result.response.text();
+      console.log("Gemini Habits Output:", responseText);
+
+      const jsonStr = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
+      const parsed = JSON.parse(jsonStr);
+
+      res.json(parsed.habits || []);
+    } catch (error: any) {
+      console.error("AI Habit Generation Error:", error);
+      res.status(500).json({ error: "Failed to generate habits" });
+    }
+  });
+
   app.post("/api/workouts/batch", authenticateToken, async (req: AuthRequest, res) => {
     try {
       const { sectionId, workouts } = req.body;
