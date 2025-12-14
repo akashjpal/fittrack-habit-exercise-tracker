@@ -32,6 +32,7 @@ export interface IStorage {
   getWorkoutsBySection(sectionId: string): Promise<Workout[]>;
   getWorkoutsByWeek(startDate: string, endDate: string, userId: string): Promise<Workout[]>;
   createWorkout(workout: InsertWorkout & { userId: string }): Promise<Workout>;
+  updateWorkoutStatus(id: string, completed: boolean): Promise<Workout>; // New method
   deleteWorkout(id: string): Promise<void>;
 
   // Habits
@@ -127,6 +128,13 @@ export class MemStorage implements IStorage {
 
   async deleteSection(id: string): Promise<void> {
     try {
+      // First delete all workouts in this section
+      const workouts = await DbHelper.getWorkoutsBySection(id);
+      for (const workout of workouts.documents) {
+        await DbHelper.deleteWorkout(workout.$id);
+      }
+
+      // Then delete the section
       await DbHelper.deleteExerciseSection(id);
     }
     catch (err) {
@@ -177,9 +185,15 @@ export class MemStorage implements IStorage {
       weight: workout.weight,
       unit: workout.unit,
       date: workoutDate,
+      completed: workout.completed, // Pass completed status
       userId: workout.userId
     });
     return { ...newWorkout, id: newWorkout.$id } as unknown as Workout;
+  }
+
+  async updateWorkoutStatus(id: string, completed: boolean): Promise<Workout> {
+    const updated = await DbHelper.updateWorkoutStatus(id, completed);
+    return { ...updated, id: updated.$id } as unknown as Workout;
   }
 
   async deleteWorkout(id: string): Promise<void> {

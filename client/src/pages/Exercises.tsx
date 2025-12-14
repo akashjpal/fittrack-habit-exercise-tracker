@@ -18,6 +18,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 export default function Exercises() {
   const { toast } = useToast();
@@ -32,6 +34,7 @@ export default function Exercises() {
   });
 
   const [sectionToDelete, setSectionToDelete] = useState<string | null>(null);
+  const [showEmptySections, setShowEmptySections] = useState(false);
 
   const handleRangeChange = (start: Date, end: Date) => {
     setWeekStart(start);
@@ -39,12 +42,10 @@ export default function Exercises() {
   };
 
   const { data: sections, isLoading: sectionsLoading } = useQuery<ExerciseSection[]>({
-    queryKey: ["/api/sections", weekStart, weekEnd],
+    queryKey: ["/api/sections"],
     queryFn: () => {
       const baseUrl = import.meta.env.VITE_API_BASE_URL || window.location.origin;
       const url = new URL(baseUrl + "/api/sections");
-      url.searchParams.set("startDate", weekStart.toISOString());
-      url.searchParams.set("endDate", weekEnd.toISOString());
       return apiRequest("GET", url.toString()).then(res => res.json());
     },
   });
@@ -159,6 +160,25 @@ export default function Exercises() {
     },
   });
 
+  const toggleWorkoutStatusMutation = useMutation({
+    mutationFn: async ({ id, completed }: { id: string; completed: boolean }) => {
+      return apiRequest("PATCH", `/api/workouts/${id}/status`, { completed });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/workouts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/workouts/week"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/analytics/dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/analytics/progress"] });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update workout status.",
+        variant: "destructive",
+      });
+    },
+  });
+
   if (sectionsLoading || workoutsLoading) {
     return (
       <div className="space-y-8" data-testid="page-exercises">
@@ -181,6 +201,19 @@ export default function Exercises() {
     })) || [],
   })) || [];
 
+  const displayedSections = sectionsWithWorkouts.filter(section => {
+    if (showEmptySections) return true;
+
+    // Check if section has workouts in the current filtered view
+    const hasWorkouts = section.workouts.length > 0;
+
+    // Check if section was created within the current week range
+    const sectionDate = new Date(section.date);
+    const createdThisWeek = sectionDate >= weekStart && sectionDate <= weekEnd;
+
+    return hasWorkouts || createdThisWeek;
+  });
+
 
 
   return (
@@ -201,15 +234,27 @@ export default function Exercises() {
         onRangeChange={handleRangeChange}
       />
 
+      <div className="flex items-center space-x-2">
+        <Switch
+          id="show-empty"
+          checked={showEmptySections}
+          onCheckedChange={setShowEmptySections}
+        />
+        <Label htmlFor="show-empty" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+          Show hidden sections
+        </Label>
+      </div>
+
       <VoiceLogger weekStart={weekStart} weekEnd={weekEnd} />
 
-      {sectionsWithWorkouts.length === 0 ? (
+      {displayedSections.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-muted-foreground mb-4">No exercise sections yet. Create one to get started!</p>
+          <p className="text-muted-foreground mb-4">No active exercise sections for this week.</p>
+          <p className="text-sm text-muted-foreground">Toggle "Show hidden sections" to see older sections.</p>
         </div>
       ) : (
         <div className="grid gap-6 md:grid-cols-2">
-          {sectionsWithWorkouts.map((section) => (
+          {displayedSections.map((section) => (
             <ExerciseSectionCard
               key={section.id}
               sectionName={section.name}
@@ -234,6 +279,7 @@ export default function Exercises() {
                 });
               }}
               onDeleteWorkout={(workoutId) => deleteWorkoutMutation.mutate(workoutId)}
+              onToggleWorkout={(workoutId, completed) => toggleWorkoutStatusMutation.mutate({ id: workoutId, completed })}
               onDeleteSection={() => setSectionToDelete(section.id)}
             />
           ))}

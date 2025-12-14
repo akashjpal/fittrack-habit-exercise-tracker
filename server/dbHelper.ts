@@ -136,6 +136,7 @@ export class DbHelper {
     weight: number;
     unit: string;
     date: string;
+    completed: boolean; // Add type definition
     userId: string;
   }) {
     try {
@@ -148,6 +149,7 @@ export class DbHelper {
         weight: data.weight,
         unit: data.unit,
         date: data.date,
+        completed: data.completed, // Add completed field
         userId: data.userId
       });
     } catch (err: any) {
@@ -208,6 +210,12 @@ export class DbHelper {
     date: string;
   }>) {
     return databases.updateDocument(databaseId, COLLECTIONS.workouts, id, data);
+  }
+
+  static async updateWorkoutStatus(id: string, completed: boolean) {
+    return databases.updateDocument(databaseId, COLLECTIONS.workouts, id, {
+      completed: completed
+    });
   }
 
   static async deleteWorkout(id: string) {

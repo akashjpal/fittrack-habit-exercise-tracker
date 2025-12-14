@@ -12,8 +12,9 @@ import AIFitCheck from "@/pages/AIFitCheck";
 import Landing from "@/pages/Landing";
 import Login from "@/pages/auth/Login";
 import Signup from "@/pages/auth/Signup";
+import WorkoutGenerator from "@/pages/WorkoutGenerator";
 import ThemeToggle from "@/components/ThemeToggle";
-import { LayoutDashboard, Dumbbell, CheckSquare, TrendingUp, Brain, Loader2 } from "lucide-react";
+import { LayoutDashboard, Dumbbell, CheckSquare, TrendingUp, Brain, Loader2, Sparkles } from "lucide-react";
 import { AuthProvider, useAuth } from "./lib/auth";
 
 function ProtectedRoute({ component: Component, path }: { component: React.ComponentType<any>, path: string }) {
@@ -53,6 +54,7 @@ function Router() {
       <ProtectedRoute path="/exercises" component={Exercises} />
       {/* <ProtectedRoute path="/habits" component={Habits} /> */}
       <ProtectedRoute path="/progress" component={Progress} />
+      <ProtectedRoute path="/workout-generator" component={WorkoutGenerator} />
       <ProtectedRoute path="/ai-fit-check" component={AIFitCheck} />
 
       <Route component={NotFound} />
@@ -64,16 +66,10 @@ function Navigation() {
   const [location] = useLocation();
   const { user, logout } = useAuth();
 
-  // Hide navigation on auth pages and landing page if not logged in
-  // Actually, landing page might show nav if logged in? 
-  // Requirement: "Dashboard, exercise, progress and ai fit check all are protected routes."
-  // Landing page is public.
   if (['/', '/login', '/signup'].includes(location) && !user) {
     return null;
   }
 
-  // If on landing page but logged in, maybe show "Go to Dashboard"?
-  // For now, let's keep the original logic but check user presence too.
   if (['/login', '/signup'].includes(location)) {
     return null;
   }
@@ -83,6 +79,7 @@ function Navigation() {
     { path: "/exercises", label: "Exercises", icon: Dumbbell },
     // { path: "/habits", label: "Habits", icon: CheckSquare },
     { path: "/progress", label: "Progress", icon: TrendingUp },
+    { path: "/workout-generator", label: "Smart Workout", icon: Sparkles },
     { path: "/ai-fit-check", label: "AI Fit Check", icon: Brain },
   ];
 
