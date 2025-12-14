@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Activity, TrendingUp, Brain, Mic, Smartphone, Sparkles } from "lucide-react";
+import { ArrowRight, Activity, TrendingUp, Brain, Mic, Smartphone, Sparkles, CheckSquare } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 
 export default function Landing() {
@@ -66,7 +66,7 @@ export default function Landing() {
                     >
                         <motion.div variants={fadeIn} className="mb-6 flex justify-center">
                             <span className="px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium border border-primary/20">
-                                New: Voice Workout Logging 🎙️
+                                New: AI Habit Tracking 🎯
                             </span>
                         </motion.div>
 
@@ -232,6 +232,92 @@ export default function Landing() {
                                     </div>
                                     <div className="h-10 w-full bg-primary rounded-lg opacity-90"></div>
                                 </div>
+                            </motion.div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Habit Command Center Showcase */}
+            <section className="py-24 relative overflow-hidden">
+                <div className="container mx-auto px-4">
+                    <div className="flex flex-col md:flex-row items-center gap-16">
+                        <div className="flex-1 order-2 md:order-1">
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                whileInView={{ opacity: 1, scale: 1 }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 0.6 }}
+                                className="relative rounded-3xl overflow-hidden shadow-2xl border border-border/50 group bg-card p-8"
+                            >
+                                <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                                {/* Mock UI for Habits */}
+                                <div className="space-y-6">
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between text-sm font-medium">
+                                            <span>Daily Progress</span>
+                                            <span>66%</span>
+                                        </div>
+                                        <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
+                                            <div className="h-full bg-blue-500 w-2/3" />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        {[
+                                            { text: "Morning Meditation", done: true },
+                                            { text: "Drink 2L Water", done: true },
+                                            { text: "Read 10 Pages", done: false },
+                                        ].map((habit, i) => (
+                                            <div key={i} className={`flex items-center gap-3 p-3 rounded-lg border ${habit.done ? 'bg-muted/50 border-transparent opacity-70' : 'bg-background border-border shadow-sm'}`}>
+                                                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${habit.done ? 'bg-blue-500 border-blue-500 text-white' : 'border-muted-foreground'}`}>
+                                                    {habit.done && <CheckSquare className="w-3 h-3" />}
+                                                </div>
+                                                <span className={habit.done ? 'line-through text-muted-foreground' : ''}>{habit.text}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className="p-4 bg-blue-500/10 rounded-xl border border-blue-500/20 flex items-center gap-3">
+                                        <Sparkles className="w-5 h-5 text-blue-500" />
+                                        <div className="text-sm text-blue-700 dark:text-blue-300">
+                                            <span className="font-semibold">AI Suggestion:</span> Try adding "Evening Stretch" for better sleep.
+                                        </div>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        </div>
+                        <div className="flex-1 order-1 md:order-2">
+                            <motion.div
+                                initial={{ opacity: 0, x: 20 }}
+                                whileInView={{ opacity: 1, x: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 0.6 }}
+                            >
+                                <div className="w-16 h-16 bg-blue-500/10 rounded-2xl flex items-center justify-center mb-8 text-blue-500">
+                                    <CheckSquare className="w-8 h-8" />
+                                </div>
+                                <h2 className="text-3xl md:text-5xl font-bold mb-6">Build Habits <br />That Stick.</h2>
+                                <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
+                                    Consistency is key. Manage your daily rituals with our centralized Habit Command Center, powered by Google Tasks. Visualise your progress and stay on track.
+                                </p>
+                                <ul className="space-y-4 mb-8">
+                                    {[
+                                        "Two-way sync with Google Tasks",
+                                        "AI-powered routine suggestions",
+                                        "Visual daily progress tracking"
+                                    ].map((item, i) => (
+                                        <li key={i} className="flex items-center gap-3 text-lg">
+                                            <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-500">
+                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                </svg>
+                                            </div>
+                                            {item}
+                                        </li>
+                                    ))}
+                                </ul>
                             </motion.div>
                         </div>
                     </div>
