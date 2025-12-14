@@ -1,7 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, Dumbbell, Trash2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ChevronDown, Dumbbell, Trash2, CheckCircle2, Circle } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
 import WorkoutEntryDialog from "./WorkoutEntryDialog";
@@ -14,6 +15,7 @@ interface Workout {
   reps: number;
   weight: number;
   unit: string;
+  completed?: boolean;
 }
 
 interface ExerciseSectionCardProps {
@@ -22,6 +24,7 @@ interface ExerciseSectionCardProps {
   workouts: Workout[];
   onAddWorkout?: (workout: Omit<Workout, 'id' | 'date'>) => void;
   onDeleteWorkout?: (workoutId: string) => void;
+  onToggleWorkout?: (workoutId: string, completed: boolean) => void;
   onDeleteSection?: () => void;
 }
 
@@ -31,10 +34,11 @@ export default function ExerciseSectionCard({
   workouts,
   onAddWorkout,
   onDeleteWorkout,
+  onToggleWorkout,
   onDeleteSection,
 }: ExerciseSectionCardProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const completedSets = workouts.reduce((sum, w) => sum + w.sets, 0);
+  const completedSets = workouts.reduce((sum, w) => (w.completed !== false ? sum + w.sets : sum), 0);
 
   return (
     <Card data-testid={`card-exercise-section-${sectionName.toLowerCase()}`}>
@@ -78,29 +82,46 @@ export default function ExerciseSectionCard({
                   data-testid={`workout-entry-${workout.id}`}
                 >
                   <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium text-sm">{workout.exerciseType}</span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-muted-foreground">
-                            {format(workout.date, 'MMM d, yyyy')}
-                          </span>
-                          {onDeleteWorkout && (
-                            <button
-                              onClick={() => onDeleteWorkout(workout.id)}
-                              className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-destructive hover:text-destructive-foreground rounded"
-                              aria-label="Delete workout"
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </button>
+                    <div className="flex items-center gap-3 flex-1">
+                      {onToggleWorkout && (
+                        <button
+                          onClick={() => onToggleWorkout(workout.id, !(workout.completed ?? true))}
+                          className={`flex-shrink-0 transition-colors ${workout.completed !== false ? "text-primary" : "text-muted-foreground hover:text-primary"
+                            }`}
+                        >
+                          {workout.completed !== false ? (
+                            <CheckCircle2 className="h-5 w-5" />
+                          ) : (
+                            <Circle className="h-5 w-5" />
                           )}
+                        </button>
+                      )}
+                      <div className={`flex-1 ${workout.completed === false ? "opacity-60" : ""}`}>
+                        <div className="flex items-center justify-between">
+                          <span className={`font-medium text-sm ${workout.completed === false ? "italic" : ""}`}>
+                            {workout.exerciseType} {workout.completed === false && "(Planned)"}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground">
+                              {format(workout.date, 'MMM d, yyyy')}
+                            </span>
+                            {onDeleteWorkout && (
+                              <button
+                                onClick={() => onDeleteWorkout(workout.id)}
+                                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-destructive hover:text-destructive-foreground rounded"
+                                aria-label="Delete workout"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
+                      <p className="text-sm text-muted-foreground">
+                        {workout.sets} sets × {workout.reps} reps @ {workout.weight}{workout.unit}
+                      </p>
                     </div>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    {workout.sets} sets × {workout.reps} reps @ {workout.weight}{workout.unit}
-                  </p>
                 </div>
               ))}
             </CollapsibleContent>

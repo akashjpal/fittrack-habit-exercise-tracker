@@ -28,6 +28,7 @@ export const workoutSchema = z.object({
   weight: z.number(),
   unit: z.string(),
   date: z.string(), // ISO string from Date.toISOString()
+  completed: z.boolean().default(true), // Added completed status
   userId: z.string().optional(), // Added userId
 });
 
