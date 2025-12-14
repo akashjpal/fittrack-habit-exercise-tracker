@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Activity, TrendingUp, Brain, Mic, Smartphone } from "lucide-react";
+import { ArrowRight, Activity, TrendingUp, Brain, Mic, Smartphone, Sparkles } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 
 export default function Landing() {
@@ -156,6 +156,82 @@ export default function Landing() {
                                         </li>
                                     ))}
                                 </ul>
+                            </motion.div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Smart Workout Generator Showcase */}
+            <section className="py-24 relative overflow-hidden bg-muted/20">
+                <div className="container mx-auto px-4">
+                    <div className="flex flex-col md:flex-row items-center gap-16">
+                        <div className="flex-1">
+                            <motion.div
+                                initial={{ opacity: 0, x: -20 }}
+                                whileInView={{ opacity: 1, x: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 0.6 }}
+                            >
+                                <div className="w-16 h-16 bg-purple-500/10 rounded-2xl flex items-center justify-center mb-8 text-purple-500">
+                                    <Sparkles className="w-8 h-8" />
+                                </div>
+                                <h2 className="text-3xl md:text-5xl font-bold mb-6">AI Personal Trainer <br />In Your Pocket.</h2>
+                                <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
+                                    Stuck on what to train? Let our Smart Workout Generator build the perfect session for you. Just describe your goal—"Leg day for strength" or "30 min HIIT"—and get a tailored plan instantly.
+                                </p>
+                                <ul className="space-y-4 mb-8">
+                                    {[
+                                        "Generates custom workouts in seconds",
+                                        "Adapts to your goals and available time",
+                                        "Seamlessly adds plans to your schedule"
+                                    ].map((item, i) => (
+                                        <li key={i} className="flex items-center gap-3 text-lg">
+                                            <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-500">
+                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                </svg>
+                                            </div>
+                                            {item}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </motion.div>
+                        </div>
+                        <div className="flex-1">
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                whileInView={{ opacity: 1, scale: 1 }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 0.6 }}
+                                className="relative rounded-3xl overflow-hidden shadow-2xl border border-border/50 group bg-card p-6"
+                            >
+                                <div className="absolute inset-0 bg-gradient-to-bl from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                                {/* Mock UI for Generator */}
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                                            <Sparkles className="w-5 h-5 text-primary" />
+                                        </div>
+                                        <div>
+                                            <div className="h-4 w-32 bg-muted rounded animate-pulse mb-1"></div>
+                                            <div className="h-3 w-20 bg-muted/50 rounded animate-pulse"></div>
+                                        </div>
+                                    </div>
+                                    <div className="p-4 bg-muted/30 rounded-xl space-y-2 border border-border/50">
+                                        <div className="h-4 w-3/4 bg-muted rounded"></div>
+                                        <div className="h-4 w-1/2 bg-muted rounded"></div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        {[1, 2, 3].map((_, i) => (
+                                            <div key={i} className="flex items-center justify-between p-3 bg-card border rounded-lg shadow-sm">
+                                                <div className="h-4 w-24 bg-muted rounded"></div>
+                                                <div className="h-4 w-16 bg-muted/50 rounded"></div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="h-10 w-full bg-primary rounded-lg opacity-90"></div>
+                                </div>
                             </motion.div>
                         </div>
                     </div>
