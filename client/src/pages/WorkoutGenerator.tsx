@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sparkles, Save, Plus, Trash2, Dumbbell, Loader2, Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useLocation } from "wouter";
 import { startOfWeek, endOfWeek } from "date-fns";
 
@@ -196,22 +197,20 @@ export default function WorkoutGenerator() {
                                 <label className="text-sm font-medium">
                                     Log to Section <span className="text-red-500">*</span>
                                 </label>
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <button
-                                                type="button"
-                                                className="ml-1 p-1 hover:bg-muted rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                                                aria-label="Info about section availability"
-                                            >
-                                                <Info className="h-4 w-4 text-muted-foreground" />
-                                            </button>
-                                        </TooltipTrigger>
-                                        <TooltipContent side="right">
-                                            <p>Only sections created in the current week are shown here.</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <button
+                                            type="button"
+                                            className="ml-1 p-1 hover:bg-muted rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                                            aria-label="Info about section availability"
+                                        >
+                                            <Info className="h-4 w-4 text-muted-foreground" />
+                                        </button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-64 p-3 text-sm">
+                                        <p>Only sections created in the current week are shown here.</p>
+                                    </PopoverContent>
+                                </Popover>
                             </div>
                             <Select value={selectedSectionId} onValueChange={setSelectedSectionId}>
                                 <SelectTrigger>
