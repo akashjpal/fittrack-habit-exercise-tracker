@@ -1,0 +1,7 @@
+--- Available Collections ---
+Name: "exercise_sections_collection_id" | ID: "exercise_sections_collection_id"
+Name: "workouts_collection_id" | ID: "workouts_collection_id"
+Name: "habits_collection_id" | ID: "habits_collection_id"
+Name: "habit_completions_collection_id" | ID: "habit_completions_collection_id"
+Name: "users_collection_id" | ID: "users"
+-----------------------------

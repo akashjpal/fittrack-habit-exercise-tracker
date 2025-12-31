@@ -19,6 +19,8 @@ This application is for:
 - **Interactive Dashboard:** A comprehensive dashboard that provides an at-a-glance view of your weekly progress, current streak for habits, and section-wise workout completion.
 - **Progress Visualization:** Track your workout volume and other metrics over time with interactive charts.
 - **Exercise Management:** Create and manage custom exercise sections to organize your workout routines.
+- **Smart Habit Insights (Lag Detector):** An intelligent coach that deeply analyzes your Google Tasks history. It identifies winning streaks, friction points (lags), and provides actionable "Next Step" recommendations based on your current focus. It effectively handles deadlines and subtasks to give you a complete picture.
+- **Deep Google Tasks Integration:** Seamlessly syncs with Google Tasks. Supports extensive features including creating lists, managing deadlines (defaulting to EOD), and full hierarchical subtask support with recursive rendering.
 - **Voice Workout Logging:** Hands-free workout logging using AI. Simply speak your exercises, sets, reps, and weights, and the system automatically parses and logs them using Google Gemini's multimodal capabilities.
 - **Modern UI/UX:** A clean, responsive, and intuitive user interface built with React, Tailwind CSS, and Shadcn/ui.
 
@@ -295,7 +297,7 @@ API errors are returned in the following format:
 
 ## 🚀 Future Improvements
 
-- **User Authentication:** Implement a full authentication system to support multiple users.
+- **Drizzle ORM Integration:** Complete the integration with Drizzle ORM to replace the current Appwrite dependency, allowing for more flexible database options.
 - **Drizzle ORM Integration:** Complete the integration with Drizzle ORM to replace the current Appwrite dependency, allowing for more flexible database options.
 - **Enhanced Analytics:** Add more detailed analytics and reporting features to provide deeper insights into user progress.
 - **Social Features:** Add social features, such as sharing workouts or competing with friends.

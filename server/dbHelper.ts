@@ -114,7 +114,8 @@ export class DbHelper {
 
   static async getExerciseSectionsByWeek(startDate: string, endDate: string, userId: string) {
     return databases.listDocuments(databaseId, COLLECTIONS.exerciseSections, [
-      Query.between("date", startDate, endDate),
+      Query.greaterThanEqual("$createdAt", startDate),
+      Query.lessThanEqual("$createdAt", endDate),
       Query.equal("userId", userId)
     ]);
   }
@@ -149,7 +150,7 @@ export class DbHelper {
         weight: data.weight,
         unit: data.unit,
         date: data.date,
-        completed: data.completed, // Add completed field
+        completed: data.completed,
         userId: data.userId
       });
     } catch (err: any) {
@@ -220,6 +221,53 @@ export class DbHelper {
 
   static async deleteWorkout(id: string) {
     return databases.deleteDocument(databaseId, COLLECTIONS.workouts, id);
+  }
+
+  // Migration: Fix workouts with null numeric values
+  static async migrateNullWorkoutValues() {
+    let hasMore = true;
+    let cursor = null;
+    let fixedCount = 0;
+
+    while (hasMore) {
+      const queries = [Query.limit(100)];
+      if (cursor) {
+        queries.push(Query.cursorAfter(cursor));
+      }
+
+      const result = await databases.listDocuments(databaseId, COLLECTIONS.workouts, queries);
+
+      if (result.documents.length === 0) {
+        hasMore = false;
+        break;
+      }
+
+      for (const doc of result.documents) {
+        const needsUpdate = doc.sets === null || doc.sets === undefined ||
+          doc.reps === null || doc.reps === undefined ||
+          doc.weight === null || doc.weight === undefined ||
+          doc.unit === null || doc.unit === undefined;
+
+        if (needsUpdate) {
+          await databases.updateDocument(databaseId, COLLECTIONS.workouts, doc.$id, {
+            sets: doc.sets ?? 0,
+            reps: doc.reps ?? 0,
+            weight: doc.weight ?? 0,
+            unit: doc.unit || 'kg'
+          });
+          fixedCount++;
+          console.log(`Fixed workout ${doc.$id}: sets=${doc.sets ?? 0}, reps=${doc.reps ?? 0}, weight=${doc.weight ?? 0}`);
+        }
+      }
+
+      cursor = result.documents[result.documents.length - 1].$id;
+      if (result.documents.length < 100) {
+        hasMore = false;
+      }
+    }
+
+    console.log(`Migration complete. Fixed ${fixedCount} workouts.`);
+    return fixedCount;
   }
 
   // Habits CRUD

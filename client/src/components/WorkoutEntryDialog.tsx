@@ -61,7 +61,7 @@ export default function WorkoutEntryDialog({ sectionName, onSave }: WorkoutEntry
               data-testid="input-exercise-type"
             />
           </div>
-          
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="sets">Sets</Label>
@@ -78,8 +78,10 @@ export default function WorkoutEntryDialog({ sectionName, onSave }: WorkoutEntry
                 <Input
                   id="sets"
                   type="number"
+                  step="any"
+                  min="0"
                   value={sets}
-                  onChange={(e) => setSets(Number(e.target.value))}
+                  onChange={(e) => setSets(parseFloat(e.target.value) || 0)}
                   className="text-center"
                   data-testid="input-sets"
                 />
@@ -110,8 +112,10 @@ export default function WorkoutEntryDialog({ sectionName, onSave }: WorkoutEntry
                 <Input
                   id="reps"
                   type="number"
+                  step="any"
+                  min="0"
                   value={reps}
-                  onChange={(e) => setReps(Number(e.target.value))}
+                  onChange={(e) => setReps(parseFloat(e.target.value) || 0)}
                   className="text-center"
                   data-testid="input-reps"
                 />
@@ -129,13 +133,17 @@ export default function WorkoutEntryDialog({ sectionName, onSave }: WorkoutEntry
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="weight">Weight</Label>
+            <Label htmlFor="weight">
+              {unit === "min" || unit === "sec" ? "Duration" : "Weight"}
+            </Label>
             <div className="flex gap-2">
               <Input
                 id="weight"
                 type="number"
+                step="any"
+                min="0"
                 value={weight}
-                onChange={(e) => setWeight(Number(e.target.value))}
+                onChange={(e) => setWeight(parseFloat(e.target.value) || 0)}
                 className="flex-1"
                 data-testid="input-weight"
               />
@@ -146,6 +154,8 @@ export default function WorkoutEntryDialog({ sectionName, onSave }: WorkoutEntry
                 <SelectContent>
                   <SelectItem value="kg">kg</SelectItem>
                   <SelectItem value="lbs">lbs</SelectItem>
+                  <SelectItem value="min">min</SelectItem>
+                  <SelectItem value="sec">sec</SelectItem>
                 </SelectContent>
               </Select>
             </div>
