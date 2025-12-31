@@ -392,7 +392,7 @@ Rules:
           exerciseType: w.name || w.exerciseType,
           sets: Number(w.sets) || 0,
           reps: Number(w.reps) || 0,
-          weight: Math.round(Number(w.weight) || 0),
+          weight: Number(w.weight) || 0,
           unit: w.unit || "kg",
           userId,
           date: new Date().toISOString(),
@@ -531,6 +531,18 @@ Rules:
     }
   });
 
+  // Migration endpoint to fix null workout values
+  app.post("/api/migrate/fix-workouts", authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const { DbHelper } = await import("./dbHelper");
+      const fixedCount = await DbHelper.migrateNullWorkoutValues();
+      res.json({ success: true, fixedCount, message: `Fixed ${fixedCount} workouts with null values` });
+    } catch (error: any) {
+      console.error("Migration error:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // --- Habits (Protected) ---
   app.get("/api/habits", authenticateToken, async (req: AuthRequest, res) => {
     try {
@@ -611,13 +623,16 @@ Rules:
   app.get("/api/analytics/dashboard", authenticateToken, async (req: AuthRequest, res) => {
     try {
       const userId = req.user!.id;
-      const sections = await storage.getAllSections(userId);
-      const workouts = await storage.getAllWorkouts(userId);
-      const completions = await storage.getAllCompletions(userId);
 
       // Calculate weekly progress
       const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
       const weekEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
+
+      // Get all user sections (show all on dashboard for overview)
+      const sections = await storage.getAllSections(userId);
+
+      const workouts = await storage.getAllWorkouts(userId);
+      const completions = await storage.getAllCompletions(userId);
 
       const thisWeekWorkouts = workouts.filter(w => {
         const workoutDate = new Date(w.date);

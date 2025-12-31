@@ -6,18 +6,15 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/Dashboard";
 import Exercises from "@/pages/Exercises";
-import Habits from "@/pages/Habits";
 import Progress from "@/pages/Progress";
 import AIFitCheck from "@/pages/AIFitCheck";
 import Landing from "@/pages/Landing";
 import Login from "@/pages/auth/Login";
 import Signup from "@/pages/auth/Signup";
-import WorkoutGenerator from "@/pages/WorkoutGenerator";
 import ThemeToggle from "@/components/ThemeToggle";
-import { LayoutDashboard, Dumbbell, CheckSquare, TrendingUp, Brain, Loader2, Sparkles } from "lucide-react";
+import { LayoutDashboard, Dumbbell, TrendingUp, Brain, Loader2 } from "lucide-react";
 import { AuthProvider, useAuth } from "./lib/auth";
 import { GoogleOAuthProvider } from "@react-oauth/google";
-import HabitsCommandCenter from "@/pages/HabitsCommandCenter";
 
 function ProtectedRoute({ component: Component, path }: { component: React.ComponentType<any>, path: string }) {
   const { user, isLoading } = useAuth();
@@ -54,9 +51,7 @@ function Router() {
       {/* Protected Routes */}
       <ProtectedRoute path="/dashboard" component={Dashboard} />
       <ProtectedRoute path="/exercises" component={Exercises} />
-      <ProtectedRoute path="/habits" component={HabitsCommandCenter} />
       <ProtectedRoute path="/progress" component={Progress} />
-      <ProtectedRoute path="/workout-generator" component={WorkoutGenerator} />
       <ProtectedRoute path="/ai-fit-check" component={AIFitCheck} />
 
       <Route component={NotFound} />
@@ -79,9 +74,7 @@ function Navigation() {
   const links = [
     { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { path: "/exercises", label: "Exercises", icon: Dumbbell },
-    { path: "/habits", label: "Habits", icon: CheckSquare },
     { path: "/progress", label: "Progress", icon: TrendingUp },
-    { path: "/workout-generator", label: "Smart Workout", icon: Sparkles },
     { path: "/ai-fit-check", label: "AI Fit Check", icon: Brain },
   ];
 

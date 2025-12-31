@@ -118,7 +118,7 @@ export default function ExerciseSectionCard({
                         </div>
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        {workout.sets} sets × {workout.reps} reps @ {workout.weight}{workout.unit}
+                        {workout.sets ?? 0} sets × {workout.reps ?? 0} reps @ {workout.weight ?? 0} {workout.unit || 'kg'}
                       </p>
                     </div>
                   </div>
