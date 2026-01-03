@@ -9,7 +9,7 @@ interface DashboardData {
   totalCompletedSets: number;
   totalTargetSets: number;
   sectionProgress: Array<{
-    sectionId: string;
+    sectionId: string;  
     sectionName: string;
     completedSets: number;
     targetSets: number;

@@ -171,7 +171,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const { GoogleGenerativeAI } = await import("@google/generative-ai");
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
         const model = genAI.getGenerativeModel({
-          model: "models/gemini-1.5-flash", // correct model
+          model: "models/gemini-2.5-flash", // correct model
         });
 
         console.log("Sending audio to Gemini…");
@@ -505,9 +505,14 @@ Rules:
   app.get("/api/workouts/week", authenticateToken, async (req: AuthRequest, res) => {
     try {
       const { startDate, endDate } = req.query;
+      console.log("GET /api/workouts/week - Query params:", { startDate, endDate, userId: req.user!.id });
       const workouts = await storage.getWorkoutsByWeek(startDate as string, endDate as string, req.user!.id);
+      console.log("GET /api/workouts/week - Found workouts:", workouts.length);
+      // Prevent caching to ensure fresh data after mutations
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.json(workouts);
     } catch (error: any) {
+      console.error("GET /api/workouts/week - Error:", error);
       res.status(500).json({ error: error.message });
     }
   });

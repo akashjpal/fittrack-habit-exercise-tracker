@@ -161,7 +161,9 @@ export class DbHelper {
 
   static async getWorkout(userId: string) {
     return databases.listDocuments(databaseId, COLLECTIONS.workouts, [
-      Query.equal("userId", userId)
+      Query.equal("userId", userId),
+      Query.limit(500), // Increase from default 25 to get all workouts
+      Query.orderDesc("date")
     ]);
   }
 
@@ -171,7 +173,9 @@ export class DbHelper {
         databaseId,
         COLLECTIONS.workouts,
         [
-          Query.equal("sectionId", sectionId)
+          Query.equal("sectionId", sectionId),
+          Query.limit(500), // Increase from default 25
+          Query.orderDesc("date")
         ]
       );
 
@@ -184,15 +188,22 @@ export class DbHelper {
 
   static async getWorkoutsByWeek(startDate: string, endDate: string, userId: string) {
     try {
+      console.log("DbHelper.getWorkoutsByWeek - Query:", { startDate, endDate, userId });
       const result = await databases.listDocuments(
         databaseId,
         COLLECTIONS.workouts,
         [
           Query.greaterThanEqual("date", startDate),
           Query.lessThanEqual("date", endDate),
-          Query.equal("userId", userId)
+          Query.equal("userId", userId),
+          Query.limit(500), // Increase from default 25 to get all workouts
+          Query.orderDesc("date") // Get newest first
         ]
       );
+      console.log("DbHelper.getWorkoutsByWeek - Results:", result.documents.length, "documents");
+      if (result.documents.length > 0) {
+        console.log("DbHelper.getWorkoutsByWeek - Sample dates:", result.documents.slice(0, 3).map(d => d.date));
+      }
 
       return result;
     } catch (err: any) {
