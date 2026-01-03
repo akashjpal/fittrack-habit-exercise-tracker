@@ -64,9 +64,10 @@ export default function Progress() {
   const currentWeek = data.volumeData[data.volumeData.length - 1];
   const previousWeek = data.volumeData[data.volumeData.length - 2];
 
-  const weeklyChange = previousWeek
+  // Handle division by zero when previous week had 0 sets
+  const weeklyChange = previousWeek && (previousWeek.total as number) > 0
     ? Math.round(((currentWeek.total as number - (previousWeek.total as number)) / (previousWeek.total as number)) * 100)
-    : 0;
+    : null; // null indicates no comparison available (first week or previous was 0)
 
   const avgSetsPerDay = currentWeek ? ((currentWeek.total as number) / 7).toFixed(1) : "0";
 
@@ -76,13 +77,23 @@ export default function Progress() {
       : "Stable"
     : "Stable";
 
+  // Format the change text based on weeklyChange value
+  const getChangeText = () => {
+    if (weeklyChange === null) {
+      return previousWeek ? "New this week" : "First week tracked";
+    }
+    if (weeklyChange > 0) return `+${weeklyChange}% from last week`;
+    if (weeklyChange < 0) return `${weeklyChange}% from last week`;
+    return "Same as last week";
+  };
+
   const stats = [
     {
       label: "Total Sets This Week",
       value: currentWeek?.total?.toString() || "0",
       icon: Target,
-      change: weeklyChange > 0 ? `+${weeklyChange}% from last week` : weeklyChange < 0 ? `${weeklyChange}% from last week` : "Same as last week",
-      positive: weeklyChange >= 0,
+      change: getChangeText(),
+      positive: weeklyChange === null || weeklyChange >= 0,
     },
     {
       label: "Average Sets/Day",

@@ -185,7 +185,7 @@ export class MemStorage implements IStorage {
       weight: workout.weight,
       unit: workout.unit,
       date: workoutDate,
-      completed: workout.completed, // Pass completed status
+      completed: workout.completed ?? true, // Default to true if not specified
       userId: workout.userId
     });
     return { ...newWorkout, id: newWorkout.$id } as unknown as Workout;
