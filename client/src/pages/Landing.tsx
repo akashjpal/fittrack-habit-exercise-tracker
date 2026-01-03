@@ -1,60 +1,179 @@
 import { Link } from "wouter";
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Activity, TrendingUp, Brain, Mic, Smartphone, Sparkles, CheckSquare } from "lucide-react";
+import {
+    ArrowRight,
+    Activity,
+    TrendingUp,
+    Brain,
+    Mic,
+    Sparkles,
+    CheckSquare,
+    Dumbbell,
+    BarChart3,
+    Zap,
+    Target,
+    Clock,
+    Shield,
+    Github,
+    Heart
+} from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
+import { useRef } from "react";
 
 export default function Landing() {
-    const fadeIn = {
-        initial: { opacity: 0, y: 20 },
+    const containerRef = useRef<HTMLDivElement>(null);
+    const { scrollYProgress } = useScroll();
+    const backgroundY = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
+
+    const fadeInUp = {
+        initial: { opacity: 0, y: 40 },
         animate: { opacity: 1, y: 0 },
-        transition: { duration: 0.6 }
+        transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] }
     };
 
-    const stagger = {
+    const staggerContainer = {
+        initial: {},
         animate: {
             transition: {
-                staggerChildren: 0.1
+                staggerChildren: 0.12,
+                delayChildren: 0.1
             }
         }
     };
 
+    const scaleIn = {
+        initial: { opacity: 0, scale: 0.9 },
+        animate: { opacity: 1, scale: 1 },
+        transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] }
+    };
+
+    const features = [
+        {
+            icon: Mic,
+            title: "Voice Logging",
+            description: "Speak your workout naturally. AI transcribes and structures your data instantly.",
+            color: "from-green-500 to-emerald-600",
+            bgColor: "bg-green-500/10",
+            textColor: "text-green-500"
+        },
+        {
+            icon: Sparkles,
+            title: "AI Workout Generator",
+            description: "Describe your goal. Get a personalized workout plan in seconds.",
+            color: "from-purple-500 to-violet-600",
+            bgColor: "bg-purple-500/10",
+            textColor: "text-purple-500"
+        },
+        {
+            icon: Brain,
+            title: "AI Fit Check",
+            description: "Get intelligent insights about your training patterns and recovery.",
+            color: "from-pink-500 to-rose-600",
+            bgColor: "bg-pink-500/10",
+            textColor: "text-pink-500"
+        },
+        {
+            icon: BarChart3,
+            title: "Progress Analytics",
+            description: "Visualize your journey with beautiful charts and weekly trends.",
+            color: "from-blue-500 to-cyan-600",
+            bgColor: "bg-blue-500/10",
+            textColor: "text-blue-500"
+        },
+        {
+            icon: CheckSquare,
+            title: "Habit Tracking",
+            description: "Build consistency with daily habits synced to Google Tasks.",
+            color: "from-amber-500 to-orange-600",
+            bgColor: "bg-amber-500/10",
+            textColor: "text-amber-500"
+        },
+        {
+            icon: Dumbbell,
+            title: "Exercise Sections",
+            description: "Organize workouts by muscle group with smart volume tracking.",
+            color: "from-indigo-500 to-blue-600",
+            bgColor: "bg-indigo-500/10",
+            textColor: "text-indigo-500"
+        }
+    ];
+
+    const stats = [
+        { value: "500+", label: "Workouts Logged", icon: Dumbbell },
+        { value: "AI", label: "Powered", icon: Brain },
+        { value: "Free", label: "Forever", icon: Heart },
+    ];
+
     return (
-        <div className="min-h-screen bg-background text-foreground overflow-x-hidden relative">
-            <div className="absolute top-4 right-4 z-50">
-                <ThemeToggle />
-            </div>
+        <div ref={containerRef} className="min-h-screen bg-background text-foreground overflow-x-hidden">
+            {/* Floating Navigation */}
+            <motion.nav
+                initial={{ y: -100, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                className="fixed top-0 left-0 right-0 z-50 px-4 py-4"
+            >
+                <div className="max-w-6xl mx-auto flex items-center justify-between bg-background/80 backdrop-blur-xl border border-border/50 rounded-2xl px-6 py-3 shadow-lg shadow-black/5">
+                    <Link href="/">
+                        <div className="flex items-center gap-2 cursor-pointer">
+                            <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary/60 rounded-lg flex items-center justify-center">
+                                <Activity className="w-5 h-5 text-primary-foreground" />
+                            </div>
+                            <span className="font-bold text-xl">FitTrack</span>
+                        </div>
+                    </Link>
+                    <div className="flex items-center gap-2">
+                        <ThemeToggle />
+                        <Link href="/login">
+                            <Button variant="ghost" className="hidden sm:flex">Log In</Button>
+                        </Link>
+                        <Link href="/signup">
+                            <Button className="rounded-full px-5">Get Started</Button>
+                        </Link>
+                    </div>
+                </div>
+            </motion.nav>
 
             {/* Hero Section */}
-            <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-                {/* Animated Background */}
+            <section className="relative min-h-screen flex items-center justify-center pt-24 pb-16 overflow-hidden">
+                {/* Animated Background Elements */}
                 <div className="absolute inset-0 z-0">
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-background" />
                     <motion.div
-                        className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl"
-                        animate={{
-                            scale: [1, 1.2, 1],
-                            opacity: [0.3, 0.5, 0.3],
-                        }}
-                        transition={{
-                            duration: 8,
-                            repeat: Infinity,
-                            ease: "easeInOut"
-                        }}
-                    />
-                    <motion.div
-                        className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-secondary/20 rounded-full blur-3xl"
-                        animate={{
-                            scale: [1, 1.5, 1],
-                            opacity: [0.2, 0.4, 0.2],
-                        }}
-                        transition={{
-                            duration: 10,
-                            repeat: Infinity,
-                            ease: "easeInOut",
-                            delay: 1
-                        }}
-                    />
+                        style={{ y: backgroundY }}
+                        className="absolute inset-0"
+                    >
+                        <div className="absolute top-0 left-0 right-0 h-[800px] bg-gradient-to-b from-primary/5 via-primary/10 to-transparent" />
+                        <motion.div
+                            className="absolute top-20 left-[10%] w-72 h-72 bg-primary/30 rounded-full blur-[100px]"
+                            animate={{
+                                scale: [1, 1.2, 1],
+                                opacity: [0.3, 0.5, 0.3],
+                                x: [0, 30, 0],
+                            }}
+                            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+                        />
+                        <motion.div
+                            className="absolute top-40 right-[15%] w-96 h-96 bg-purple-500/20 rounded-full blur-[120px]"
+                            animate={{
+                                scale: [1, 1.3, 1],
+                                opacity: [0.2, 0.4, 0.2],
+                                y: [0, -40, 0],
+                            }}
+                            transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+                        />
+                        <motion.div
+                            className="absolute bottom-20 left-[30%] w-64 h-64 bg-cyan-500/20 rounded-full blur-[80px]"
+                            animate={{
+                                scale: [1, 1.4, 1],
+                                opacity: [0.15, 0.3, 0.15],
+                            }}
+                            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                        />
+                    </motion.div>
+
+                    {/* Grid Pattern */}
+                    <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.02)_1px,transparent_1px)] bg-[size:72px_72px] [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_70%)]" />
                 </div>
 
                 <div className="container mx-auto px-4 z-10 relative">
@@ -62,357 +181,448 @@ export default function Landing() {
                         className="max-w-4xl mx-auto text-center"
                         initial="initial"
                         animate="animate"
-                        variants={stagger}
+                        variants={staggerContainer}
                     >
-                        <motion.div variants={fadeIn} className="mb-6 flex justify-center">
-                            <span className="px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium border border-primary/20">
-                                New: AI Habit Tracking 🎯
+                        {/* Badge */}
+                        <motion.div variants={fadeInUp} className="mb-8">
+                            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-primary/10 to-purple-500/10 border border-primary/20 text-sm font-medium">
+                                <Zap className="w-4 h-4 text-primary" />
+                                <span className="bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">
+                                    AI-Powered Fitness Tracking
+                                </span>
                             </span>
                         </motion.div>
 
+                        {/* Main Headline */}
                         <motion.h1
-                            className="text-5xl md:text-7xl font-bold tracking-tight mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/60"
-                            variants={fadeIn}
+                            className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-8 leading-[1.1]"
+                            variants={fadeInUp}
                         >
-                            Fitness Tracking,
+                            <span className="bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent">
+                                Train Smarter.
+                            </span>
                             <br />
-                            <span className="text-foreground">Reimagined.</span>
+                            <span className="bg-gradient-to-r from-primary via-purple-500 to-pink-500 bg-clip-text text-transparent">
+                                Track Better.
+                            </span>
                         </motion.h1>
 
+                        {/* Subtitle */}
                         <motion.p
-                            className="text-xl md:text-2xl text-muted-foreground mb-10 max-w-2xl mx-auto"
-                            variants={fadeIn}
+                            className="text-lg sm:text-xl md:text-2xl text-muted-foreground mb-12 max-w-2xl mx-auto leading-relaxed"
+                            variants={fadeInUp}
                         >
-                            Experience the future of fitness with AI-powered voice logging, smart analytics, and seamless habit tracking.
+                            Voice-powered workout logging, AI workout generation, and smart analytics
+                            to help you build lasting fitness habits.
                         </motion.p>
 
+                        {/* CTA Buttons */}
                         <motion.div
-                            className="flex flex-col sm:flex-row gap-4 justify-center"
-                            variants={fadeIn}
+                            className="flex flex-col sm:flex-row gap-4 justify-center mb-16"
+                            variants={fadeInUp}
                         >
                             <Link href="/signup">
-                                <Button size="lg" className="text-lg px-8 py-6 h-auto rounded-full group shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all">
-                                    Start Your Journey
+                                <Button
+                                    size="lg"
+                                    className="text-lg px-8 py-7 h-auto rounded-full group bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary shadow-xl shadow-primary/25 hover:shadow-primary/40 transition-all duration-300"
+                                >
+                                    Start Free Today
                                     <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                                 </Button>
                             </Link>
                             <Link href="/login">
-                                <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto rounded-full hover:bg-secondary/10">
-                                    Log In
+                                <Button
+                                    variant="outline"
+                                    size="lg"
+                                    className="text-lg px-8 py-7 h-auto rounded-full border-2 hover:bg-muted/50"
+                                >
+                                    Sign In
                                 </Button>
                             </Link>
                         </motion.div>
+
+                        {/* Stats */}
+                        <motion.div
+                            variants={fadeInUp}
+                            className="flex flex-wrap justify-center gap-8 sm:gap-12"
+                        >
+                            {stats.map((stat, index) => (
+                                <motion.div
+                                    key={index}
+                                    className="flex items-center gap-3"
+                                    whileHover={{ scale: 1.05 }}
+                                    transition={{ type: "spring", stiffness: 400 }}
+                                >
+                                    <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
+                                        <stat.icon className="w-5 h-5 text-primary" />
+                                    </div>
+                                    <div className="text-left">
+                                        <div className="text-xl font-bold">{stat.value}</div>
+                                        <div className="text-sm text-muted-foreground">{stat.label}</div>
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </motion.div>
                     </motion.div>
                 </div>
-            </section>
 
-            {/* Voice Logging Showcase */}
-            <section className="py-24 relative overflow-hidden">
-                <div className="container mx-auto px-4">
-                    <div className="flex flex-col md:flex-row items-center gap-16">
-                        <div className="flex-1 order-2 md:order-1">
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                whileInView={{ opacity: 1, scale: 1 }}
-                                viewport={{ once: true }}
-                                transition={{ duration: 0.6 }}
-                                className="relative rounded-3xl overflow-hidden shadow-2xl border border-border/50 group"
-                            >
-                                <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                                <img
-                                    src="/voice-logging.png"
-                                    alt="Voice Logging Interface"
-                                    className="w-full h-auto object-cover transform group-hover:scale-105 transition-transform duration-700"
-                                />
-                            </motion.div>
-                        </div>
-                        <div className="flex-1 order-1 md:order-2">
-                            <motion.div
-                                initial={{ opacity: 0, x: 20 }}
-                                whileInView={{ opacity: 1, x: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ duration: 0.6 }}
-                            >
-                                <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-8 text-primary">
-                                    <Mic className="w-8 h-8" />
-                                </div>
-                                <h2 className="text-3xl md:text-5xl font-bold mb-6">Just Say It. <br />We'll Log It.</h2>
-                                <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
-                                    Forget manual entry. With our advanced AI Voice Logger, simply speak your workout details—sets, reps, weights—and watch them instantly transform into structured data.
-                                </p>
-                                <ul className="space-y-4 mb-8">
-                                    {[
-                                        "Hands-free logging during workouts",
-                                        "Smart parsing of exercise names",
-                                        "Automatic date and section matching"
-                                    ].map((item, i) => (
-                                        <li key={i} className="flex items-center gap-3 text-lg">
-                                            <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center text-green-500">
-                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                                </svg>
-                                            </div>
-                                            {item}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </motion.div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* Smart Workout Generator Showcase */}
-            <section className="py-24 relative overflow-hidden bg-muted/20">
-                <div className="container mx-auto px-4">
-                    <div className="flex flex-col md:flex-row items-center gap-16">
-                        <div className="flex-1">
-                            <motion.div
-                                initial={{ opacity: 0, x: -20 }}
-                                whileInView={{ opacity: 1, x: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ duration: 0.6 }}
-                            >
-                                <div className="w-16 h-16 bg-purple-500/10 rounded-2xl flex items-center justify-center mb-8 text-purple-500">
-                                    <Sparkles className="w-8 h-8" />
-                                </div>
-                                <h2 className="text-3xl md:text-5xl font-bold mb-6">AI Personal Trainer <br />In Your Pocket.</h2>
-                                <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
-                                    Stuck on what to train? Let our Smart Workout Generator build the perfect session for you. Just describe your goal—"Leg day for strength" or "30 min HIIT"—and get a tailored plan instantly.
-                                </p>
-                                <ul className="space-y-4 mb-8">
-                                    {[
-                                        "Generates custom workouts in seconds",
-                                        "Adapts to your goals and available time",
-                                        "Seamlessly adds plans to your schedule"
-                                    ].map((item, i) => (
-                                        <li key={i} className="flex items-center gap-3 text-lg">
-                                            <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-500">
-                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                                </svg>
-                                            </div>
-                                            {item}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </motion.div>
-                        </div>
-                        <div className="flex-1">
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                whileInView={{ opacity: 1, scale: 1 }}
-                                viewport={{ once: true }}
-                                transition={{ duration: 0.6 }}
-                                className="relative rounded-3xl overflow-hidden shadow-2xl border border-border/50 group bg-card p-6"
-                            >
-                                <div className="absolute inset-0 bg-gradient-to-bl from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                                {/* Mock UI for Generator */}
-                                <div className="space-y-4">
-                                    <div className="flex items-center gap-3 mb-4">
-                                        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                                            <Sparkles className="w-5 h-5 text-primary" />
-                                        </div>
-                                        <div>
-                                            <div className="h-4 w-32 bg-muted rounded animate-pulse mb-1"></div>
-                                            <div className="h-3 w-20 bg-muted/50 rounded animate-pulse"></div>
-                                        </div>
-                                    </div>
-                                    <div className="p-4 bg-muted/30 rounded-xl space-y-2 border border-border/50">
-                                        <div className="h-4 w-3/4 bg-muted rounded"></div>
-                                        <div className="h-4 w-1/2 bg-muted rounded"></div>
-                                    </div>
-                                    <div className="space-y-2">
-                                        {[1, 2, 3].map((_, i) => (
-                                            <div key={i} className="flex items-center justify-between p-3 bg-card border rounded-lg shadow-sm">
-                                                <div className="h-4 w-24 bg-muted rounded"></div>
-                                                <div className="h-4 w-16 bg-muted/50 rounded"></div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <div className="h-10 w-full bg-primary rounded-lg opacity-90"></div>
-                                </div>
-                            </motion.div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* Habit Command Center Showcase */}
-            <section className="py-24 relative overflow-hidden">
-                <div className="container mx-auto px-4">
-                    <div className="flex flex-col md:flex-row items-center gap-16">
-                        <div className="flex-1 order-2 md:order-1">
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                whileInView={{ opacity: 1, scale: 1 }}
-                                viewport={{ once: true }}
-                                transition={{ duration: 0.6 }}
-                                className="relative rounded-3xl overflow-hidden shadow-2xl border border-border/50 group bg-card p-8"
-                            >
-                                <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-                                {/* Mock UI for Habits */}
-                                <div className="space-y-6">
-                                    <div className="space-y-2">
-                                        <div className="flex justify-between text-sm font-medium">
-                                            <span>Daily Progress</span>
-                                            <span>66%</span>
-                                        </div>
-                                        <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
-                                            <div className="h-full bg-blue-500 w-2/3" />
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-3">
-                                        {[
-                                            { text: "Morning Meditation", done: true },
-                                            { text: "Drink 2L Water", done: true },
-                                            { text: "Read 10 Pages", done: false },
-                                        ].map((habit, i) => (
-                                            <div key={i} className={`flex items-center gap-3 p-3 rounded-lg border ${habit.done ? 'bg-muted/50 border-transparent opacity-70' : 'bg-background border-border shadow-sm'}`}>
-                                                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${habit.done ? 'bg-blue-500 border-blue-500 text-white' : 'border-muted-foreground'}`}>
-                                                    {habit.done && <CheckSquare className="w-3 h-3" />}
-                                                </div>
-                                                <span className={habit.done ? 'line-through text-muted-foreground' : ''}>{habit.text}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    <div className="p-4 bg-blue-500/10 rounded-xl border border-blue-500/20 flex items-center gap-3">
-                                        <Sparkles className="w-5 h-5 text-blue-500" />
-                                        <div className="text-sm text-blue-700 dark:text-blue-300">
-                                            <span className="font-semibold">AI Suggestion:</span> Try adding "Evening Stretch" for better sleep.
-                                        </div>
-                                    </div>
-                                </div>
-                            </motion.div>
-                        </div>
-                        <div className="flex-1 order-1 md:order-2">
-                            <motion.div
-                                initial={{ opacity: 0, x: 20 }}
-                                whileInView={{ opacity: 1, x: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ duration: 0.6 }}
-                            >
-                                <div className="w-16 h-16 bg-blue-500/10 rounded-2xl flex items-center justify-center mb-8 text-blue-500">
-                                    <CheckSquare className="w-8 h-8" />
-                                </div>
-                                <h2 className="text-3xl md:text-5xl font-bold mb-6">Build Habits <br />That Stick.</h2>
-                                <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
-                                    Consistency is key. Manage your daily rituals with our centralized Habit Command Center, powered by Google Tasks. Visualise your progress and stay on track.
-                                </p>
-                                <ul className="space-y-4 mb-8">
-                                    {[
-                                        "Two-way sync with Google Tasks",
-                                        "AI-powered routine suggestions",
-                                        "Visual daily progress tracking"
-                                    ].map((item, i) => (
-                                        <li key={i} className="flex items-center gap-3 text-lg">
-                                            <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-500">
-                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                                </svg>
-                                            </div>
-                                            {item}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </motion.div>
-                        </div>
-                    </div>
-                </div>
+                {/* Scroll Indicator */}
+                <motion.div
+                    className="absolute bottom-8 left-1/2 -translate-x-1/2"
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 1.5, duration: 0.6 }}
+                >
+                    <motion.div
+                        className="w-6 h-10 rounded-full border-2 border-muted-foreground/30 flex justify-center pt-2"
+                        animate={{ y: [0, 8, 0] }}
+                        transition={{ duration: 1.5, repeat: Infinity }}
+                    >
+                        <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50" />
+                    </motion.div>
+                </motion.div>
             </section>
 
             {/* Features Grid */}
-            <section className="py-24 bg-muted/30">
+            <section className="py-24 sm:py-32 relative">
                 <div className="container mx-auto px-4">
                     <motion.div
-                        initial={{ opacity: 0, y: 20 }}
+                        initial={{ opacity: 0, y: 30 }}
                         whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
+                        viewport={{ once: true, margin: "-100px" }}
                         transition={{ duration: 0.6 }}
-                        className="text-center mb-16"
+                        className="text-center mb-16 sm:mb-20"
                     >
-                        <h2 className="text-3xl md:text-4xl font-bold mb-4">Complete Fitness Ecosystem</h2>
-                        <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                            Everything you need to build healthy habits and crush your goals.
+                        <span className="inline-block px-4 py-1.5 rounded-full bg-muted text-sm font-medium text-muted-foreground mb-6">
+                            Features
+                        </span>
+                        <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6">
+                            Everything You Need to
+                            <span className="block bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">
+                                Crush Your Goals
+                            </span>
+                        </h2>
+                        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                            A complete fitness ecosystem powered by AI, designed to make tracking effortless and insights actionable.
                         </p>
                     </motion.div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        {[
-                            {
-                                icon: Activity,
-                                title: "Smart Tracking",
-                                description: "Log exercises, sets, and reps with an intuitive interface designed for speed."
-                            },
-                            {
-                                icon: TrendingUp,
-                                title: "Visual Analytics",
-                                description: "Track your progress with interactive charts for volume, frequency, and consistency."
-                            },
-                            {
-                                icon: Brain,
-                                title: "AI Insights",
-                                description: "Get personalized recommendations to optimize your training and recovery."
-                            }
-                        ].map((feature, index) => (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {features.map((feature, index) => (
                             <motion.div
                                 key={index}
-                                initial={{ opacity: 0, y: 20 }}
+                                initial={{ opacity: 0, y: 30 }}
                                 whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
+                                viewport={{ once: true, margin: "-50px" }}
                                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                                className="bg-card p-8 rounded-3xl shadow-sm border border-border/50 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300"
+                                whileHover={{ y: -8, transition: { duration: 0.3 } }}
+                                className="group relative bg-card rounded-3xl p-8 border border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/5"
                             >
-                                <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mb-6 text-primary">
+                                {/* Gradient overlay on hover */}
+                                <div className={`absolute inset-0 rounded-3xl bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-[0.03] transition-opacity duration-500`} />
+
+                                <div className={`w-14 h-14 ${feature.bgColor} rounded-2xl flex items-center justify-center mb-6 ${feature.textColor} group-hover:scale-110 transition-transform duration-300`}>
                                     <feature.icon className="w-7 h-7" />
                                 </div>
-                                <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
-                                <p className="text-muted-foreground leading-relaxed">{feature.description}</p>
+
+                                <h3 className="text-xl font-bold mb-3 group-hover:text-primary transition-colors">
+                                    {feature.title}
+                                </h3>
+                                <p className="text-muted-foreground leading-relaxed">
+                                    {feature.description}
+                                </p>
                             </motion.div>
                         ))}
                     </div>
                 </div>
             </section>
 
-            {/* Coming Soon */}
-            <section className="py-24">
+            {/* Voice Logging Showcase */}
+            <section className="py-24 sm:py-32 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-b from-muted/30 via-muted/50 to-muted/30" />
+
+                <div className="container mx-auto px-4 relative z-10">
+                    <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
+                        <motion.div
+                            className="flex-1 order-2 lg:order-1"
+                            initial={{ opacity: 0, x: -40 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.7 }}
+                        >
+                            <div className="relative">
+                                {/* Mock Voice UI */}
+                                <div className="bg-card rounded-3xl p-8 border border-border shadow-2xl">
+                                    <div className="flex items-center gap-4 mb-6">
+                                        <motion.div
+                                            className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center text-white"
+                                            animate={{ scale: [1, 1.05, 1] }}
+                                            transition={{ duration: 2, repeat: Infinity }}
+                                        >
+                                            <Mic className="w-8 h-8" />
+                                        </motion.div>
+                                        <div>
+                                            <div className="font-semibold text-lg">Voice Logger</div>
+                                            <div className="text-sm text-muted-foreground">Recording...</div>
+                                        </div>
+                                    </div>
+
+                                    {/* Waveform Animation */}
+                                    <div className="flex items-center justify-center gap-1 h-16 mb-6">
+                                        {[...Array(20)].map((_, i) => (
+                                            <motion.div
+                                                key={i}
+                                                className="w-1.5 bg-gradient-to-t from-green-500 to-emerald-400 rounded-full"
+                                                animate={{
+                                                    height: [20, Math.random() * 40 + 20, 20],
+                                                }}
+                                                transition={{
+                                                    duration: 0.5,
+                                                    repeat: Infinity,
+                                                    delay: i * 0.05,
+                                                }}
+                                            />
+                                        ))}
+                                    </div>
+
+                                    {/* Transcription */}
+                                    <div className="bg-muted/50 rounded-xl p-4 border border-border/50">
+                                        <p className="text-sm text-muted-foreground mb-2">Transcribed:</p>
+                                        <p className="font-medium">"3 sets of bench press, 10 reps at 80 kg"</p>
+                                    </div>
+                                </div>
+
+                                {/* Floating elements */}
+                                <motion.div
+                                    className="absolute -top-4 -right-4 bg-green-500 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg"
+                                    animate={{ y: [0, -8, 0] }}
+                                    transition={{ duration: 3, repeat: Infinity }}
+                                >
+                                    ✓ Auto-parsed
+                                </motion.div>
+                            </div>
+                        </motion.div>
+
+                        <motion.div
+                            className="flex-1 order-1 lg:order-2"
+                            initial={{ opacity: 0, x: 40 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.7 }}
+                        >
+                            <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mb-8 text-white shadow-lg shadow-green-500/25">
+                                <Mic className="w-8 h-8" />
+                            </div>
+                            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 leading-tight">
+                                Just Speak.
+                                <span className="block text-green-500">We Handle the Rest.</span>
+                            </h2>
+                            <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
+                                Forget manual data entry. Our AI-powered voice logger understands natural language
+                                and automatically structures your workout data.
+                            </p>
+                            <ul className="space-y-4">
+                                {[
+                                    "Hands-free logging during workouts",
+                                    "Smart exercise name recognition",
+                                    "Instant data structuring"
+                                ].map((item, i) => (
+                                    <motion.li
+                                        key={i}
+                                        className="flex items-center gap-3"
+                                        initial={{ opacity: 0, x: 20 }}
+                                        whileInView={{ opacity: 1, x: 0 }}
+                                        viewport={{ once: true }}
+                                        transition={{ delay: i * 0.1 }}
+                                    >
+                                        <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center text-green-500 flex-shrink-0">
+                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        </div>
+                                        <span className="text-lg">{item}</span>
+                                    </motion.li>
+                                ))}
+                            </ul>
+                        </motion.div>
+                    </div>
+                </div>
+            </section>
+
+            {/* AI Generator Showcase */}
+            <section className="py-24 sm:py-32 relative overflow-hidden">
                 <div className="container mx-auto px-4">
+                    <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
+                        <motion.div
+                            className="flex-1"
+                            initial={{ opacity: 0, x: -40 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.7 }}
+                        >
+                            <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-violet-600 rounded-2xl flex items-center justify-center mb-8 text-white shadow-lg shadow-purple-500/25">
+                                <Sparkles className="w-8 h-8" />
+                            </div>
+                            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 leading-tight">
+                                Describe Your Goal.
+                                <span className="block text-purple-500">Get Your Plan.</span>
+                            </h2>
+                            <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
+                                Tell our AI what you want to achieve, and get a personalized workout plan
+                                instantly. From "quick upper body" to "leg day for hypertrophy".
+                            </p>
+                            <ul className="space-y-4">
+                                {[
+                                    "Natural language prompts",
+                                    "Customized to your goals",
+                                    "One-click add to schedule"
+                                ].map((item, i) => (
+                                    <motion.li
+                                        key={i}
+                                        className="flex items-center gap-3"
+                                        initial={{ opacity: 0, x: 20 }}
+                                        whileInView={{ opacity: 1, x: 0 }}
+                                        viewport={{ once: true }}
+                                        transition={{ delay: i * 0.1 }}
+                                    >
+                                        <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-500 flex-shrink-0">
+                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        </div>
+                                        <span className="text-lg">{item}</span>
+                                    </motion.li>
+                                ))}
+                            </ul>
+                        </motion.div>
+
+                        <motion.div
+                            className="flex-1"
+                            initial={{ opacity: 0, x: 40 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.7 }}
+                        >
+                            <div className="relative">
+                                {/* Mock AI Generator UI */}
+                                <div className="bg-card rounded-3xl p-8 border border-border shadow-2xl">
+                                    <div className="flex items-center gap-3 mb-6">
+                                        <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl flex items-center justify-center text-white">
+                                            <Sparkles className="w-5 h-5" />
+                                        </div>
+                                        <div className="font-semibold">AI Workout Generator</div>
+                                    </div>
+
+                                    <div className="bg-muted/50 rounded-xl p-4 mb-6 border border-border/50">
+                                        <p className="text-muted-foreground text-sm mb-1">Your prompt:</p>
+                                        <p className="font-medium">"30-minute HIIT for fat loss"</p>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        {[
+                                            { name: "Burpees", sets: "3", reps: "12" },
+                                            { name: "Mountain Climbers", sets: "3", reps: "30s" },
+                                            { name: "Jump Squats", sets: "3", reps: "15" },
+                                        ].map((exercise, i) => (
+                                            <motion.div
+                                                key={i}
+                                                initial={{ opacity: 0, y: 10 }}
+                                                whileInView={{ opacity: 1, y: 0 }}
+                                                viewport={{ once: true }}
+                                                transition={{ delay: 0.3 + i * 0.1 }}
+                                                className="flex items-center justify-between p-3 bg-background rounded-lg border border-border/50"
+                                            >
+                                                <span className="font-medium">{exercise.name}</span>
+                                                <span className="text-sm text-muted-foreground">{exercise.sets} × {exercise.reps}</span>
+                                            </motion.div>
+                                        ))}
+                                    </div>
+
+                                    <Button className="w-full mt-6 rounded-xl bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700">
+                                        Add to Schedule
+                                    </Button>
+                                </div>
+
+                                <motion.div
+                                    className="absolute -bottom-4 -left-4 bg-purple-500 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg"
+                                    animate={{ y: [0, -8, 0] }}
+                                    transition={{ duration: 3, repeat: Infinity, delay: 1 }}
+                                >
+                                    ⚡ Generated in 2s
+                                </motion.div>
+                            </div>
+                        </motion.div>
+                    </div>
+                </div>
+            </section>
+
+            {/* CTA Section */}
+            <section className="py-24 sm:py-32 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-purple-500/10 to-pink-500/10" />
+                <motion.div
+                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/20 rounded-full blur-[150px]"
+                    animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
+                    transition={{ duration: 8, repeat: Infinity }}
+                />
+
+                <div className="container mx-auto px-4 relative z-10">
                     <motion.div
-                        initial={{ opacity: 0, y: 20 }}
+                        initial={{ opacity: 0, y: 30 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
-                        className="bg-gradient-to-br from-secondary/10 to-background border border-secondary/20 rounded-3xl p-12 text-center relative overflow-hidden"
+                        transition={{ duration: 0.7 }}
+                        className="max-w-3xl mx-auto text-center"
                     >
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-secondary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-
-                        <div className="relative z-10 max-w-2xl mx-auto">
-                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/10 text-secondary-foreground text-sm font-medium mb-8">
-                                <span className="relative flex h-2 w-2">
-                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
-                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-secondary"></span>
-                                </span>
-                                Coming Soon
-                            </div>
-
-                            <h2 className="text-3xl md:text-5xl font-bold mb-6">Google Fit Integration</h2>
-                            <p className="text-xl text-muted-foreground mb-10">
-                                Seamlessly sync your steps, calories, and activity data. Connect your favorite wearables and keep all your health data in one place.
-                            </p>
-
-                            <div className="flex justify-center gap-8 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
-                                <div className="flex items-center gap-2">
-                                    <Smartphone className="w-8 h-8" />
-                                    <span className="font-semibold text-lg">Google Fit</span>
-                                </div>
-                                {/* Add more partner logos here if needed */}
-                            </div>
+                        <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-8">
+                            Ready to Transform
+                            <span className="block bg-gradient-to-r from-primary via-purple-500 to-pink-500 bg-clip-text text-transparent">
+                                Your Fitness Journey?
+                            </span>
+                        </h2>
+                        <p className="text-lg sm:text-xl text-muted-foreground mb-12">
+                            Join thousands of users who are training smarter with AI-powered tracking.
+                            It's free to start.
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                            <Link href="/signup">
+                                <Button
+                                    size="lg"
+                                    className="text-lg px-10 py-7 h-auto rounded-full group bg-gradient-to-r from-primary to-purple-500 hover:from-primary/90 hover:to-purple-500/90 shadow-xl shadow-primary/25"
+                                >
+                                    Get Started Free
+                                    <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                                </Button>
+                            </Link>
                         </div>
                     </motion.div>
                 </div>
             </section>
+
+            {/* Footer */}
+            <footer className="py-12 border-t border-border/50 bg-muted/20">
+                <div className="container mx-auto px-4">
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                        <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary/60 rounded-lg flex items-center justify-center">
+                                <Activity className="w-5 h-5 text-primary-foreground" />
+                            </div>
+                            <span className="font-bold text-lg">FitTrack</span>
+                        </div>
+
+                        <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                            <a href="https://github.com/akashjpal/fittrack-habit-exercise-tracker" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors flex items-center gap-2">
+                                <Github className="w-4 h-4" />
+                                GitHub
+                            </a>
+                            <span>Built with ❤️ for fitness enthusiasts</span>
+                        </div>
+
+                        <p className="text-sm text-muted-foreground">
+                            © {new Date().getFullYear()} FitTrack. All rights reserved.
+                        </p>
+                    </div>
+                </div>
+            </footer>
         </div>
     );
 }
