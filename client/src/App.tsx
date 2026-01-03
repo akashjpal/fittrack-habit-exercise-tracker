@@ -63,10 +63,12 @@ function Navigation() {
   const [location] = useLocation();
   const { user, logout } = useAuth();
 
-  if (['/', '/login', '/signup'].includes(location) && !user) {
+  // Always hide navigation on landing page (it has its own nav)
+  if (location === '/') {
     return null;
   }
 
+  // Hide on login/signup pages
   if (['/login', '/signup'].includes(location)) {
     return null;
   }
