@@ -93,13 +93,52 @@ export class DbHelper {
   }
 
   // Exercise Sections CRUD
-  static async createExerciseSection(data: { name: string; targetSets: number; date: string; userId: string }) {
+  static async createExerciseSection(data: {
+    name: string;
+    targetSets: number;
+    date: string;
+    userId: string;
+    isLibrary?: boolean;
+    archived?: boolean;
+  }) {
     return databases.createDocument(databaseId, COLLECTIONS.exerciseSections, ID.unique(), {
       name: data.name,
       targetSets: data.targetSets,
       date: data.date,
-      userId: data.userId
+      userId: data.userId,
+      isLibrary: data.isLibrary || false,
+      archived: data.archived || false
     });
+  }
+
+  // Create a library section (name-only template)
+  static async createLibrarySection(data: { name: string; userId: string }) {
+    return databases.createDocument(databaseId, COLLECTIONS.exerciseSections, ID.unique(), {
+      name: data.name,
+      date: new Date().toISOString(),
+      userId: data.userId,
+      isLibrary: true,
+      archived: false
+    });
+  }
+
+  // Get only library sections (isLibrary = true)
+  static async getLibrarySections(userId: string) {
+    return databases.listDocuments(databaseId, COLLECTIONS.exerciseSections, [
+      Query.equal("userId", userId),
+      Query.equal("isLibrary", true),
+      Query.limit(5000)
+    ]);
+  }
+
+  // Get active (non-archived) library sections for dropdown
+  static async getActiveLibrarySections(userId: string) {
+    return databases.listDocuments(databaseId, COLLECTIONS.exerciseSections, [
+      Query.equal("userId", userId),
+      Query.equal("isLibrary", true),
+      Query.equal("archived", false),
+      Query.limit(5000)
+    ]);
   }
 
   static async getExerciseSection(id: string) {
@@ -107,23 +146,44 @@ export class DbHelper {
   }
 
   static async getAllExerciseSections(userId: string) {
-    return databases.listDocuments(databaseId, COLLECTIONS.exerciseSections, [
+    const result = await databases.listDocuments(databaseId, COLLECTIONS.exerciseSections, [
       Query.equal("userId", userId),
       Query.limit(5000) // Appwrite max limit
     ]);
+    // Filter out library sections (templates) so they don't appear in weekly views
+    // Use explicit filter because old docs might not have isLibrary attribute
+    const filteredDocs = result.documents.filter((doc: any) => !doc.isLibrary);
+    return {
+      documents: filteredDocs,
+      total: filteredDocs.length
+    };
   }
 
   static async getExerciseSectionsByWeek(startDate: string, endDate: string, userId: string) {
-    return databases.listDocuments(databaseId, COLLECTIONS.exerciseSections, [
+    const result = await databases.listDocuments(databaseId, COLLECTIONS.exerciseSections, [
       Query.greaterThanEqual("$createdAt", startDate),
       Query.lessThanEqual("$createdAt", endDate),
       Query.equal("userId", userId),
       Query.limit(5000) // Appwrite max limit
     ]);
+    const filteredDocs = result.documents.filter((doc: any) => !doc.isLibrary);
+    return {
+      documents: filteredDocs,
+      total: filteredDocs.length
+    };
   }
 
-  static async updateExerciseSection(id: string, data: Partial<{ name: string; targetSets: number }>) {
-    return databases.updateDocument(databaseId, COLLECTIONS.exerciseSections, id, data);
+  static async updateExerciseSection(id: string, data: Partial<{
+    name: string;
+    targetSets: number;
+    archived: boolean;
+  }>) {
+    const updateData: Record<string, any> = {};
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.targetSets !== undefined) updateData.targetSets = data.targetSets;
+    if (data.archived !== undefined) updateData.archived = data.archived;
+
+    return databases.updateDocument(databaseId, COLLECTIONS.exerciseSections, id, updateData);
   }
 
   static async deleteExerciseSection(id: string) {

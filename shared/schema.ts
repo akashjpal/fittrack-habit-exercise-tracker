@@ -4,10 +4,13 @@ import { z } from "zod";
 export const exerciseSectionSchema = z.object({
   id: z.string(),
   name: z.string(),
-  targetSets: z.number(),
+  targetSets: z.number().optional(), // Optional for library sections (name-only)
   date: z.string(), // ISO string for the week/date
   createdAt: z.string(), // ISO string from Date.toISOString()
   userId: z.string().optional(), // Added userId
+  isLibrary: z.boolean().optional(), // true = permanent library section
+  archived: z.boolean().optional(), // Hide from picker without deleting
+  librarySectionId: z.string().optional(), // Reference to library section for week instances
 });
 
 export const insertExerciseSectionSchema = exerciseSectionSchema.omit({
