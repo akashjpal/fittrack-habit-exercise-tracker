@@ -108,7 +108,8 @@ export class DbHelper {
 
   static async getAllExerciseSections(userId: string) {
     return databases.listDocuments(databaseId, COLLECTIONS.exerciseSections, [
-      Query.equal("userId", userId)
+      Query.equal("userId", userId),
+      Query.limit(5000) // Appwrite max limit
     ]);
   }
 
@@ -116,7 +117,8 @@ export class DbHelper {
     return databases.listDocuments(databaseId, COLLECTIONS.exerciseSections, [
       Query.greaterThanEqual("$createdAt", startDate),
       Query.lessThanEqual("$createdAt", endDate),
-      Query.equal("userId", userId)
+      Query.equal("userId", userId),
+      Query.limit(5000) // Appwrite max limit
     ]);
   }
 
@@ -162,7 +164,7 @@ export class DbHelper {
   static async getWorkout(userId: string) {
     return databases.listDocuments(databaseId, COLLECTIONS.workouts, [
       Query.equal("userId", userId),
-      Query.limit(500), // Increase from default 25 to get all workouts
+      Query.limit(5000), // Appwrite max limit
       Query.orderDesc("date")
     ]);
   }
@@ -174,7 +176,7 @@ export class DbHelper {
         COLLECTIONS.workouts,
         [
           Query.equal("sectionId", sectionId),
-          Query.limit(500), // Increase from default 25
+          Query.limit(5000), // Appwrite max limit
           Query.orderDesc("date")
         ]
       );
@@ -196,7 +198,7 @@ export class DbHelper {
           Query.greaterThanEqual("date", startDate),
           Query.lessThanEqual("date", endDate),
           Query.equal("userId", userId),
-          Query.limit(500), // Increase from default 25 to get all workouts
+          Query.limit(5000), // Appwrite max limit
           Query.orderDesc("date") // Get newest first
         ]
       );
