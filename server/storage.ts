@@ -26,6 +26,11 @@ export interface IStorage {
   getSectionById(id: string): Promise<ExerciseSection | undefined>;
   createSection(section: InsertExerciseSection & { userId: string }): Promise<ExerciseSection>;
   deleteSection(id: string): Promise<void>;
+  // Library Sections
+  getLibrarySections(userId: string): Promise<ExerciseSection[]>;
+  getActiveLibrarySections(userId: string): Promise<ExerciseSection[]>;
+  createLibrarySection(section: { name: string; userId: string }): Promise<ExerciseSection>;
+  updateSection(id: string, data: { name?: string; targetSets?: number; archived?: boolean }): Promise<ExerciseSection>;
 
   // Workouts
   getAllWorkouts(userId: string): Promise<Workout[]>;
@@ -119,7 +124,7 @@ export class MemStorage implements IStorage {
   async createSection(section: InsertExerciseSection & { userId: string }): Promise<ExerciseSection> {
     const newSection = await DbHelper.createExerciseSection({
       name: section.name,
-      targetSets: section.targetSets,
+      targetSets: section.targetSets ?? 10, // Default to 10 if not provided
       date: section.date,
       userId: section.userId
     });
@@ -141,6 +146,45 @@ export class MemStorage implements IStorage {
       console.error("Error deleting exercise section from DB:", err);
       throw err;
     }
+  }
+
+  // Library Sections
+  async getLibrarySections(userId: string): Promise<ExerciseSection[]> {
+    try {
+      const result = await DbHelper.getLibrarySections(userId);
+      return result.documents.map(doc => ({
+        ...doc,
+        id: doc.$id,
+        createdAt: doc.$createdAt,
+      })) as unknown as ExerciseSection[];
+    } catch (err) {
+      console.error("Error fetching library sections from DB:", err);
+      throw err;
+    }
+  }
+
+  async getActiveLibrarySections(userId: string): Promise<ExerciseSection[]> {
+    try {
+      const result = await DbHelper.getActiveLibrarySections(userId);
+      return result.documents.map(doc => ({
+        ...doc,
+        id: doc.$id,
+        createdAt: doc.$createdAt,
+      })) as unknown as ExerciseSection[];
+    } catch (err) {
+      console.error("Error fetching active library sections from DB:", err);
+      throw err;
+    }
+  }
+
+  async createLibrarySection(section: { name: string; userId: string }): Promise<ExerciseSection> {
+    const newSection = await DbHelper.createLibrarySection(section);
+    return { ...newSection, id: newSection.$id } as unknown as ExerciseSection;
+  }
+
+  async updateSection(id: string, data: { name?: string; targetSets?: number; archived?: boolean }): Promise<ExerciseSection> {
+    const updated = await DbHelper.updateExerciseSection(id, data);
+    return { ...updated, id: updated.$id } as unknown as ExerciseSection;
   }
 
   // Workouts

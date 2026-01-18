@@ -437,6 +437,47 @@ Rules:
     }
   });
 
+  // --- Library Sections (Protected) - MUST be before /:id routes ---
+  app.get("/api/sections/library", authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const sections = await storage.getLibrarySections(req.user!.id);
+      res.json(sections);
+    } catch (error: any) {
+      console.error("GET /api/sections/library - error:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get active (non-archived) library sections for dropdown
+  app.get("/api/sections/library/active", authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const sections = await storage.getActiveLibrarySections(req.user!.id);
+      res.json(sections);
+    } catch (error: any) {
+      console.error("GET /api/sections/library/active - error:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Create library section (name-only)
+  app.post("/api/sections/library", authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const { name } = req.body;
+      if (!name) {
+        res.status(400).json({ error: "name is required" });
+        return;
+      }
+      const section = await storage.createLibrarySection({
+        name,
+        userId: req.user!.id
+      });
+      res.json(section);
+    } catch (error: any) {
+      console.error("POST /api/sections/library - error:", error);
+      res.status(400).json({ error: error.message });
+    }
+  });
+
   app.get("/api/sections/:id", authenticateToken, async (req: AuthRequest, res) => {
     try {
       const section = await storage.getSectionById(req.params.id);
@@ -477,6 +518,29 @@ Rules:
       }
       await storage.deleteSection(req.params.id);
       res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.patch("/api/sections/:id", authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const section = await storage.getSectionById(req.params.id);
+      if (!section) {
+        res.status(404).json({ message: "Section not found" });
+        return;
+      }
+      if (section.userId && section.userId !== req.user!.id) {
+        res.status(403).json({ message: "Forbidden" });
+        return;
+      }
+      const { name, targetSets, archived } = req.body;
+      const updated = await storage.updateSection(req.params.id, {
+        ...(name !== undefined && { name }),
+        ...(targetSets !== undefined && { targetSets: Number(targetSets) }),
+        ...(archived !== undefined && { archived })
+      });
+      res.json(updated);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -645,7 +709,7 @@ Rules:
       });
 
       const totalCompletedSets = thisWeekWorkouts.reduce((sum, w) => sum + w.sets, 0);
-      const totalTargetSets = sections.reduce((sum, s) => sum + s.targetSets, 0);
+      const totalTargetSets = sections.reduce((sum, s) => sum + (s.targetSets ?? 0), 0);
 
       // Calculate section progress
       const sectionProgress = sections.map(section => {

@@ -1,25 +1,46 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, Library } from "lucide-react";
+import type { ExerciseSection } from "@shared/schema";
+import { Link } from "wouter";
 
 interface AddSectionDialogProps {
-  onAdd?: (section: { name: string; targetSets: number }) => void;
+  onAdd?: (section: { name: string; targetSets: number; librarySectionId: string }) => void;
 }
 
 export default function AddSectionDialog({ onAdd }: AddSectionDialogProps) {
   const [open, setOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [targetSets, setTargetSets] = useState(12);
+  const [selectedSectionId, setSelectedSectionId] = useState("");
+  const [targetSets, setTargetSets] = useState(10);
+
+  // Fetch active library sections for dropdown
+  const { data: librarySections = [], isLoading } = useQuery<ExerciseSection[]>({
+    queryKey: ["/api/sections/library/active"],
+    queryFn: () => {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || window.location.origin;
+      return apiRequest("GET", `${baseUrl}/api/sections/library/active`).then(res => res.json());
+    },
+    enabled: open, // Only fetch when dialog is open
+  });
+
+  const selectedSection = librarySections.find(s => s.id === selectedSectionId);
 
   const handleAdd = () => {
-    console.log("Adding section:", { name, targetSets });
-    onAdd?.({ name, targetSets });
+    if (!selectedSection) return;
+    onAdd?.({
+      name: selectedSection.name,
+      targetSets,
+      librarySectionId: selectedSection.id
+    });
     setOpen(false);
-    setName("");
-    setTargetSets(12);
+    setSelectedSectionId("");
+    setTargetSets(10);
   };
 
   return (
@@ -32,40 +53,62 @@ export default function AddSectionDialog({ onAdd }: AddSectionDialogProps) {
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add Exercise Section</DialogTitle>
+          <DialogTitle>Add Section to This Week</DialogTitle>
           <DialogDescription>
-            Create a new muscle group or exercise category to track
+            Select a section from your library to add to this week
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="section-name">Section Name</Label>
-            <Input
-              id="section-name"
-              placeholder="e.g., Chest, Back, Legs, Shoulders"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              data-testid="input-section-name"
-            />
+            <Label htmlFor="library-section">Library Section</Label>
+            {isLoading ? (
+              <div className="text-sm text-muted-foreground py-2">Loading sections...</div>
+            ) : librarySections.length === 0 ? (
+              <div className="text-sm text-muted-foreground py-2 space-y-2">
+                <p>No sections in library yet.</p>
+                <Link href="/library">
+                  <Button variant="outline" size="sm" className="gap-2" onClick={() => setOpen(false)}>
+                    <Library className="h-4 w-4" />
+                    Go to Library
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <Select value={selectedSectionId} onValueChange={setSelectedSectionId}>
+                <SelectTrigger id="library-section" data-testid="select-library-section">
+                  <SelectValue placeholder="Select a section..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {librarySections.map((section) => (
+                    <SelectItem key={section.id} value={section.id}>
+                      {section.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="target-sets">Weekly Target Sets</Label>
-            <Input
-              id="target-sets"
-              type="number"
-              value={targetSets}
-              onChange={(e) => setTargetSets(Number(e.target.value))}
-              data-testid="input-target-sets"
-            />
-          </div>
+
+          {selectedSectionId && (
+            <div className="space-y-2">
+              <Label htmlFor="target-sets">Target Sets This Week</Label>
+              <Input
+                id="target-sets"
+                type="number"
+                min={1}
+                value={targetSets}
+                onChange={(e) => setTargetSets(Number(e.target.value) || 10)}
+                data-testid="input-target-sets"
+              />
+            </div>
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)} data-testid="button-cancel-section">
             Cancel
           </Button>
-          <Button onClick={handleAdd} disabled={!name} data-testid="button-save-section">
-            Add Section
+          <Button onClick={handleAdd} disabled={!selectedSectionId} data-testid="button-save-section">
+            Add to Week
           </Button>
         </DialogFooter>
       </DialogContent>

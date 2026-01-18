@@ -8,11 +8,13 @@ import Dashboard from "@/pages/Dashboard";
 import Exercises from "@/pages/Exercises";
 import Progress from "@/pages/Progress";
 import AIFitCheck from "@/pages/AIFitCheck";
+import WorkoutHistory from "@/pages/WorkoutHistory";
+import SectionLibrary from "@/pages/SectionLibrary";
 import Landing from "@/pages/Landing";
 import Login from "@/pages/auth/Login";
 import Signup from "@/pages/auth/Signup";
 import ThemeToggle from "@/components/ThemeToggle";
-import { LayoutDashboard, Dumbbell, TrendingUp, Brain, Loader2 } from "lucide-react";
+import { LayoutDashboard, Dumbbell, TrendingUp, Brain, Loader2, History, Library } from "lucide-react";
 import { AuthProvider, useAuth } from "./lib/auth";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
@@ -51,7 +53,9 @@ function Router() {
       {/* Protected Routes */}
       <ProtectedRoute path="/dashboard" component={Dashboard} />
       <ProtectedRoute path="/exercises" component={Exercises} />
+      <ProtectedRoute path="/library" component={SectionLibrary} />
       <ProtectedRoute path="/progress" component={Progress} />
+      <ProtectedRoute path="/history" component={WorkoutHistory} />
       <ProtectedRoute path="/ai-fit-check" component={AIFitCheck} />
 
       <Route component={NotFound} />
@@ -76,6 +80,8 @@ function Navigation() {
   const links = [
     { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { path: "/exercises", label: "Exercises", icon: Dumbbell },
+    { path: "/library", label: "Library", icon: Library },
+    { path: "/history", label: "History", icon: History },
     { path: "/progress", label: "Progress", icon: TrendingUp },
     { path: "/ai-fit-check", label: "AI Fit Check", icon: Brain },
   ];

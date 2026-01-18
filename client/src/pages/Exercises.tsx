@@ -62,7 +62,7 @@ export default function Exercises() {
   });
 
   const addSectionMutation = useMutation({
-    mutationFn: async (section: { name: string; targetSets: number }) => {
+    mutationFn: async (section: { name: string; targetSets: number; librarySectionId?: string }) => {
       return apiRequest("POST", "/api/sections", {
         ...section,
         date: weekStart.toISOString(),
@@ -73,7 +73,7 @@ export default function Exercises() {
       queryClient.invalidateQueries({ queryKey: ["/api/analytics/dashboard"] });
       toast({
         title: "Section added",
-        description: "Your exercise section has been created successfully.",
+        description: "Section added to this week.",
       });
     },
     onError: () => {
@@ -273,7 +273,7 @@ export default function Exercises() {
             <ExerciseSectionCard
               key={section.id}
               sectionName={section.name}
-              targetSets={section.targetSets}
+              targetSets={section.targetSets ?? 10}
               workouts={section.workouts}
               onAddWorkout={(workout) => {
                 // If adding to a past week, use the start of that week (plus 12 hours to be safe/middle of day)
