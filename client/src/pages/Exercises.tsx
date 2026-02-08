@@ -276,15 +276,15 @@ export default function Exercises() {
               targetSets={section.targetSets ?? 10}
               workouts={section.workouts}
               onAddWorkout={(workout) => {
-                // If adding to a past week, use the start of that week (plus 12 hours to be safe/middle of day)
-                // If adding to current week, use current time
-                const isCurrentWeek = weekStart <= new Date() && weekEnd >= new Date();
-                const workoutDate = isCurrentWeek ? new Date() : new Date(weekStart.getTime() + 12 * 60 * 60 * 1000);
+                // Use the date from the workout dialog (user-selected)
+                // Fallback to current date if not provided
+                const workoutDate = workout.date
+                  ? new Date(workout.date + 'T12:00:00') // Add time to avoid timezone issues
+                  : new Date();
 
                 console.log("Adding workout:", {
-                  weekStart: weekStart.toISOString(),
-                  isCurrentWeek,
-                  calculatedDate: workoutDate.toISOString()
+                  userSelectedDate: workout.date,
+                  workoutDate: workoutDate.toISOString()
                 });
 
                 addWorkoutMutation.mutate({

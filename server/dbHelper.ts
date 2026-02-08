@@ -110,7 +110,7 @@ export class DbHelper {
       archived: data.archived || false
     });
   }
-
+ 
   // Create a library section (name-only template)
   static async createLibrarySection(data: { name: string; userId: string }) {
     return databases.createDocument(databaseId, COLLECTIONS.exerciseSections, ID.unique(), {

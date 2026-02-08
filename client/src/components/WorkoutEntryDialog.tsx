@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Minus } from "lucide-react";
+import { Plus, Minus, Calendar } from "lucide-react";
 
 interface WorkoutEntryDialogProps {
   sectionName: string;
@@ -14,8 +14,15 @@ interface WorkoutEntryDialogProps {
     reps: number;
     weight: number;
     unit: string;
+    date: string;
   }) => void;
 }
+
+// Helper to get today's date in YYYY-MM-DD format
+const getTodayDate = () => {
+  const today = new Date();
+  return today.toISOString().split('T')[0];
+};
 
 export default function WorkoutEntryDialog({ sectionName, onSave }: WorkoutEntryDialogProps) {
   const [open, setOpen] = useState(false);
@@ -24,15 +31,17 @@ export default function WorkoutEntryDialog({ sectionName, onSave }: WorkoutEntry
   const [reps, setReps] = useState(10);
   const [weight, setWeight] = useState(20);
   const [unit, setUnit] = useState("kg");
+  const [workoutDate, setWorkoutDate] = useState(getTodayDate());
 
   const handleSave = () => {
-    console.log("Saving workout:", { exerciseType, sets, reps, weight, unit });
-    onSave?.({ exerciseType, sets, reps, weight, unit });
+    console.log("Saving workout:", { exerciseType, sets, reps, weight, unit, date: workoutDate });
+    onSave?.({ exerciseType, sets, reps, weight, unit, date: workoutDate });
     setOpen(false);
     setExerciseType("");
     setSets(3);
     setReps(10);
     setWeight(20);
+    setWorkoutDate(getTodayDate());
   };
 
   return (
@@ -51,6 +60,21 @@ export default function WorkoutEntryDialog({ sectionName, onSave }: WorkoutEntry
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
+          {/* Date Selection */}
+          <div className="space-y-2">
+            <Label htmlFor="workout-date" className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              Workout Date
+            </Label>
+            <Input
+              id="workout-date"
+              type="date"
+              value={workoutDate}
+              onChange={(e) => setWorkoutDate(e.target.value)}
+              data-testid="input-workout-date"
+            />
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="exercise">Exercise Type</Label>
             <Input

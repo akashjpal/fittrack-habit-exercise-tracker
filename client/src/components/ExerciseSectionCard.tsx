@@ -22,7 +22,7 @@ interface ExerciseSectionCardProps {
   sectionName: string;
   targetSets: number;
   workouts: Workout[];
-  onAddWorkout?: (workout: Omit<Workout, 'id' | 'date'>) => void;
+  onAddWorkout?: (workout: Omit<Workout, 'id' | 'date'> & { date: string }) => void;
   onDeleteWorkout?: (workoutId: string) => void;
   onToggleWorkout?: (workoutId: string, completed: boolean) => void;
   onDeleteSection?: () => void;
