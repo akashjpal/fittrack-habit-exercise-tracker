@@ -110,7 +110,7 @@ export class DbHelper {
       archived: data.archived || false
     });
   }
- 
+
   // Create a library section (name-only template)
   static async createLibrarySection(data: { name: string; userId: string }) {
     return databases.createDocument(databaseId, COLLECTIONS.exerciseSections, ID.unique(), {
@@ -206,7 +206,7 @@ export class DbHelper {
       console.log("CREATE WORKOUT DATA:", data);
       return databases.createDocument(databaseId, COLLECTIONS.workouts, ID.unique(), {
         sectionId: data.sectionId,
-        exerciseType: data.exerciseType,
+        exerciseType: data.exerciseType.toLowerCase(),
         sets: data.sets,
         reps: data.reps,
         weight: data.weight,
