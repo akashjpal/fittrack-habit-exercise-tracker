@@ -10,6 +10,7 @@ import { History, Search, Calendar, Dumbbell, CheckCircle2, Circle, TrendingUp, 
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
 import type { Workout, ExerciseSection } from "@shared/schema";
 import ExerciseProgressionChart from "@/components/ExerciseProgressionChart";
+import SectionProgressChart from "@/components/SectionProgressChart";
 
 type DateRange = "7" | "30" | "90" | "365" | "all";
 
@@ -42,14 +43,36 @@ export default function WorkoutHistory() {
         },
     });
 
-    // Fetch sections for filter dropdown
-    const { data: sections = [] } = useQuery<ExerciseSection[]>({
+    // Fetch library sections for filter dropdown (only library sections, not weekly instances)
+    const { data: librarySections = [] } = useQuery<ExerciseSection[]>({
+        queryKey: ["/api/sections/library"],
+        queryFn: async () => {
+            const baseUrl = import.meta.env.VITE_API_BASE_URL || window.location.origin;
+            const res = await apiRequest("GET", `${baseUrl}/api/sections/library`);
+            const data = await res.json();
+            console.log("Library sections API response:", data);
+            return data;
+        },
+    });
+
+    // Get active (non-archived) library sections for dropdown
+    const sections = librarySections.filter(s => !s.archived);
+    console.log("Filtered sections for dropdown:", sections);
+
+    // Fetch all sections to resolve names for workouts (weekly section instances)
+    const { data: allSections = [] } = useQuery<ExerciseSection[]>({
         queryKey: ["/api/sections"],
         queryFn: () => {
             const baseUrl = import.meta.env.VITE_API_BASE_URL || window.location.origin;
             return apiRequest("GET", `${baseUrl}/api/sections`).then(res => res.json());
         },
     });
+
+    // Helper: Get section name by ID from all sections
+    const getSectionName = (sectionId: string): string => {
+        const section = allSections.find(s => s.id === sectionId);
+        return section?.name || "Unknown Section";
+    };
 
     // Get unique exercise types for the chart selector
     const exerciseTypes = useMemo(() => {
@@ -66,18 +89,28 @@ export default function WorkoutHistory() {
 
     // Filter workouts
     const filteredWorkouts = useMemo(() => {
+        // Get the selected library section name for matching
+        const selectedLibSection = librarySections.find(s => s.id === selectedSection);
+        const selectedSectionNameForFilter = selectedLibSection?.name;
+
         return workouts
             .filter(workout => {
                 const workoutDate = new Date(workout.date);
                 const inDateRange = workoutDate >= startDate && workoutDate <= endDate;
                 const matchesSearch = searchQuery === "" ||
                     workout.exerciseType.toLowerCase().includes(searchQuery.toLowerCase());
-                const matchesSection = selectedSection === "all" || workout.sectionId === selectedSection;
+
+                // Match workouts by section name (since weekly sections share the library section's name)
+                let matchesSection = selectedSection === "all";
+                if (!matchesSection && selectedSectionNameForFilter) {
+                    const workoutSectionName = getSectionName(workout.sectionId);
+                    matchesSection = workoutSectionName === selectedSectionNameForFilter;
+                }
 
                 return inDateRange && matchesSearch && matchesSection;
             })
             .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    }, [workouts, startDate, endDate, searchQuery, selectedSection]);
+    }, [workouts, startDate, endDate, searchQuery, selectedSection, librarySections, allSections]);
 
     // Get workouts for selected exercise (for charts)
     const exerciseWorkouts = useMemo(() => {
@@ -104,11 +137,18 @@ export default function WorkoutHistory() {
         return groups;
     }, [filteredWorkouts]);
 
-    // Get section name by ID
-    const getSectionName = (sectionId: string) => {
-        const section = sections.find(s => s.id === sectionId);
-        return section?.name || "Unknown Section";
-    };
+    // Get workouts for selected section (for section chart)
+    const sectionWorkouts = useMemo(() => {
+        if (selectedSection === "all") return [];
+        return filteredWorkouts;
+    }, [selectedSection, filteredWorkouts]);
+
+    // Get the selected section name
+    const selectedSectionName = useMemo(() => {
+        if (selectedSection === "all") return "";
+        const section = librarySections.find(s => s.id === selectedSection);
+        return section?.name || "";
+    }, [selectedSection, librarySections]);
 
     if (workoutsLoading) {
         return (
@@ -187,6 +227,24 @@ export default function WorkoutHistory() {
                     </div>
                 </CardContent>
             </Card>
+
+            {/* Section Progress Chart - Shows when a specific section is selected */}
+            {selectedSection !== "all" && sectionWorkouts.length > 0 && (
+                <Card>
+                    <CardHeader className="pb-4">
+                        <CardTitle className="flex items-center gap-2">
+                            <TrendingUp className="h-5 w-5 text-primary" />
+                            {selectedSectionName} - Section Progress
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <SectionProgressChart
+                            sectionName={selectedSectionName}
+                            workouts={sectionWorkouts}
+                        />
+                    </CardContent>
+                </Card>
+            )}
 
             {/* Exercise Progression Charts */}
             {exerciseTypes.length > 0 && (
