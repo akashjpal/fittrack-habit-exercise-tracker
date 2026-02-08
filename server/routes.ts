@@ -61,17 +61,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const accessToken = generateAccessToken(user);
       const refreshToken = generateRefreshToken(user);
 
+      const isProduction = process.env.NODE_ENV === "production";
+
       res.cookie("accessToken", accessToken, {
         httpOnly: true,
-        secure: true,
-        sameSite: "none",
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "lax",
         maxAge: 15 * 60 * 1000, // 15 minutes
       });
 
       res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
-        secure: true,
-        sameSite: "none",
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "lax",
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
 
@@ -89,30 +91,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/login", async (req, res) => {
     try {
       const { username, password } = req.body;
+      console.log("Login attempt for user:", username);
+
       const user = await storage.getUserByUsername(username);
-      if (!user || !(await comparePassword(password, user.password))) {
+      console.log("User found:", user ? "yes" : "no");
+
+      if (!user) {
+        console.log("Login failed: User not found");
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      const passwordMatch = await comparePassword(password, user.password);
+      console.log("Password match:", passwordMatch);
+
+      if (!passwordMatch) {
+        console.log("Login failed: Password mismatch");
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
       const accessToken = generateAccessToken(user);
       const refreshToken = generateRefreshToken(user);
 
+      const isProduction = process.env.NODE_ENV === "production";
+      console.log("Setting cookies, isProduction:", isProduction);
+
       res.cookie("accessToken", accessToken, {
         httpOnly: true,
-        secure: true,
-        sameSite: "none",
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "lax",
         maxAge: 15 * 60 * 1000, // 15 minutes
       });
 
       res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
-        secure: true,
-        sameSite: "none",
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "lax",
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
 
+      console.log("Login successful for user:", username);
       res.json({ user: { id: user.id, username: user.username } });
-    } catch (err) {
+    } catch (err: any) {
+      console.error("Login error:", err);
       res.status(500).json({ message: "Internal Server Error" });
     }
   });
@@ -129,10 +149,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     const newAccessToken = generateAccessToken(user);
 
+    const isProduction = process.env.NODE_ENV === "production";
+
     res.cookie("accessToken", newAccessToken, {
       httpOnly: true,
-      secure: true,
-      sameSite: "none",
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
       maxAge: 15 * 60 * 1000, // 15 minutes
     });
 
