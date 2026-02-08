@@ -16,7 +16,9 @@ import {
     Clock,
     Shield,
     Github,
-    Heart
+    Heart,
+    LayoutDashboard,
+    Library
 } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useRef } from "react";
@@ -50,57 +52,56 @@ export default function Landing() {
 
     const features = [
         {
-            icon: Mic,
-            title: "Voice Logging",
-            description: "Speak your workout naturally. AI transcribes and structures your data instantly.",
-            color: "from-green-500 to-emerald-600",
-            bgColor: "bg-green-500/10",
-            textColor: "text-green-500"
-        },
-        {
-            icon: Sparkles,
-            title: "AI Workout Generator",
-            description: "Describe your goal. Get a personalized workout plan in seconds.",
-            color: "from-purple-500 to-violet-600",
-            bgColor: "bg-purple-500/10",
-            textColor: "text-purple-500"
-        },
-        {
-            icon: Brain,
-            title: "AI Fit Check",
-            description: "Get intelligent insights about your training patterns and recovery.",
-            color: "from-pink-500 to-rose-600",
-            bgColor: "bg-pink-500/10",
-            textColor: "text-pink-500"
-        },
-        {
-            icon: BarChart3,
-            title: "Progress Analytics",
-            description: "Visualize your journey with beautiful charts and weekly trends.",
+            icon: LayoutDashboard,
+            title: "Smart Dashboard",
+            description: "Get a complete overview of your fitness journey with weekly stats and progress at a glance.",
             color: "from-blue-500 to-cyan-600",
             bgColor: "bg-blue-500/10",
             textColor: "text-blue-500"
         },
         {
-            icon: CheckSquare,
-            title: "Habit Tracking",
-            description: "Build consistency with daily habits synced to Google Tasks.",
-            color: "from-amber-500 to-orange-600",
-            bgColor: "bg-amber-500/10",
-            textColor: "text-amber-500"
-        },
-        {
             icon: Dumbbell,
-            title: "Exercise Sections",
-            description: "Organize workouts by muscle group with smart volume tracking.",
+            title: "Exercise Tracking",
+            description: "Log workouts with voice or text. Track sets, reps, and weight with AI-powered parsing.",
             color: "from-indigo-500 to-blue-600",
             bgColor: "bg-indigo-500/10",
             textColor: "text-indigo-500"
+        },
+        {
+            icon: Library,
+            title: "Section Library",
+            description: "Organize workouts by muscle group. Create custom sections and reuse them weekly.",
+            color: "from-purple-500 to-violet-600",
+            bgColor: "bg-purple-500/10",
+            textColor: "text-purple-500"
+        },
+        {
+            icon: TrendingUp,
+            title: "Progress Analytics",
+            description: "Visualize your journey with beautiful charts showing weight and volume trends.",
+            color: "from-green-500 to-emerald-600",
+            bgColor: "bg-green-500/10",
+            textColor: "text-green-500"
+        },
+        {
+            icon: Brain,
+            title: "AI Fit Check",
+            description: "Get intelligent insights about your training patterns, recovery, and personalized tips.",
+            color: "from-pink-500 to-rose-600",
+            bgColor: "bg-pink-500/10",
+            textColor: "text-pink-500"
+        },
+        {
+            icon: Mic,
+            title: "Voice Logging",
+            description: "Speak your workout naturally. AI transcribes and structures your data instantly.",
+            color: "from-amber-500 to-orange-600",
+            bgColor: "bg-amber-500/10",
+            textColor: "text-amber-500"
         }
     ];
 
     const stats = [
-        { value: "500+", label: "Workouts Logged", icon: Dumbbell },
         { value: "AI", label: "Powered", icon: Brain },
         { value: "Free", label: "Forever", icon: Heart },
     ];
@@ -444,113 +445,6 @@ export default function Landing() {
                                     </motion.li>
                                 ))}
                             </ul>
-                        </motion.div>
-                    </div>
-                </div>
-            </section>
-
-            {/* AI Generator Showcase */}
-            <section className="py-24 sm:py-32 relative overflow-hidden">
-                <div className="container mx-auto px-4">
-                    <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
-                        <motion.div
-                            className="flex-1"
-                            initial={{ opacity: 0, x: -40 }}
-                            whileInView={{ opacity: 1, x: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ duration: 0.7 }}
-                        >
-                            <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-violet-600 rounded-2xl flex items-center justify-center mb-8 text-white shadow-lg shadow-purple-500/25">
-                                <Sparkles className="w-8 h-8" />
-                            </div>
-                            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 leading-tight">
-                                Describe Your Goal.
-                                <span className="block text-purple-500">Get Your Plan.</span>
-                            </h2>
-                            <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-                                Tell our AI what you want to achieve, and get a personalized workout plan
-                                instantly. From "quick upper body" to "leg day for hypertrophy".
-                            </p>
-                            <ul className="space-y-4">
-                                {[
-                                    "Natural language prompts",
-                                    "Customized to your goals",
-                                    "One-click add to schedule"
-                                ].map((item, i) => (
-                                    <motion.li
-                                        key={i}
-                                        className="flex items-center gap-3"
-                                        initial={{ opacity: 0, x: 20 }}
-                                        whileInView={{ opacity: 1, x: 0 }}
-                                        viewport={{ once: true }}
-                                        transition={{ delay: i * 0.1 }}
-                                    >
-                                        <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-500 flex-shrink-0">
-                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                            </svg>
-                                        </div>
-                                        <span className="text-lg">{item}</span>
-                                    </motion.li>
-                                ))}
-                            </ul>
-                        </motion.div>
-
-                        <motion.div
-                            className="flex-1"
-                            initial={{ opacity: 0, x: 40 }}
-                            whileInView={{ opacity: 1, x: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ duration: 0.7 }}
-                        >
-                            <div className="relative">
-                                {/* Mock AI Generator UI */}
-                                <div className="bg-card rounded-3xl p-8 border border-border shadow-2xl">
-                                    <div className="flex items-center gap-3 mb-6">
-                                        <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl flex items-center justify-center text-white">
-                                            <Sparkles className="w-5 h-5" />
-                                        </div>
-                                        <div className="font-semibold">AI Workout Generator</div>
-                                    </div>
-
-                                    <div className="bg-muted/50 rounded-xl p-4 mb-6 border border-border/50">
-                                        <p className="text-muted-foreground text-sm mb-1">Your prompt:</p>
-                                        <p className="font-medium">"30-minute HIIT for fat loss"</p>
-                                    </div>
-
-                                    <div className="space-y-3">
-                                        {[
-                                            { name: "Burpees", sets: "3", reps: "12" },
-                                            { name: "Mountain Climbers", sets: "3", reps: "30s" },
-                                            { name: "Jump Squats", sets: "3", reps: "15" },
-                                        ].map((exercise, i) => (
-                                            <motion.div
-                                                key={i}
-                                                initial={{ opacity: 0, y: 10 }}
-                                                whileInView={{ opacity: 1, y: 0 }}
-                                                viewport={{ once: true }}
-                                                transition={{ delay: 0.3 + i * 0.1 }}
-                                                className="flex items-center justify-between p-3 bg-background rounded-lg border border-border/50"
-                                            >
-                                                <span className="font-medium">{exercise.name}</span>
-                                                <span className="text-sm text-muted-foreground">{exercise.sets} × {exercise.reps}</span>
-                                            </motion.div>
-                                        ))}
-                                    </div>
-
-                                    <Button className="w-full mt-6 rounded-xl bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700">
-                                        Add to Schedule
-                                    </Button>
-                                </div>
-
-                                <motion.div
-                                    className="absolute -bottom-4 -left-4 bg-purple-500 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg"
-                                    animate={{ y: [0, -8, 0] }}
-                                    transition={{ duration: 3, repeat: Infinity, delay: 1 }}
-                                >
-                                    ⚡ Generated in 2s
-                                </motion.div>
-                            </div>
                         </motion.div>
                     </div>
                 </div>
