@@ -2,8 +2,7 @@
   "include": [
     "client/src/**/*",
     "shared/**/*",
-    "server/**/*",
-    "verify_auth.ts"
+    "server/**/*"
   ],
   "exclude": [
     "node_modules",
@@ -38,6 +37,9 @@
       ],
       "@shared/*": [
         "./shared/*"
+      ],
+      "@fittrack/shared": [
+        "./shared/src/index.ts"
       ]
     }
   }

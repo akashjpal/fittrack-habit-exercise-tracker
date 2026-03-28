@@ -1,95 +1,47 @@
-import { z } from "zod";
+/**
+ * Backward-compatible re-export of all types.
+ * Client code can continue importing from "@shared/schema".
+ * Types use camelCase to match the API response format.
+ */
+export type {
+  ExerciseSection,
+  Workout,
+  Habit,
+  HabitCompletion,
+} from "./src/index";
 
-// Exercise Section Schema
-export const exerciseSectionSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  targetSets: z.number().optional(), // Optional for library sections (name-only)
-  date: z.string(), // ISO string for the week/date
-  createdAt: z.string(), // ISO string from Date.toISOString()
-  userId: z.string().optional(), // Added userId
-  isLibrary: z.boolean().optional(), // true = permanent library section
-  archived: z.boolean().optional(), // Hide from picker without deleting
-  librarySectionId: z.string().optional(), // Reference to library section for week instances
-});
+// Also re-export schemas and DTOs for any code that needs them
+export {
+  exerciseSectionSchema,
+  createSectionSchema,
+  updateSectionSchema,
+  workoutSchema,
+  createWorkoutSchema,
+  batchCreateWorkoutSchema,
+  habitSchema,
+  createHabitSchema,
+  habitCompletionSchema,
+  createCompletionSchema,
+} from "./src/index";
 
-export const insertExerciseSectionSchema = exerciseSectionSchema.omit({
-  id: true,
-  createdAt: true
-});
+export type {
+  ExerciseSectionRow,
+  CreateSectionDto,
+  UpdateSectionDto,
+  WorkoutRow,
+  CreateWorkoutDto,
+  BatchCreateWorkoutDto,
+  HabitRow,
+  CreateHabitDto,
+  HabitCompletionRow,
+  CreateCompletionDto,
+} from "./src/index";
 
-export type ExerciseSection = z.infer<typeof exerciseSectionSchema>;
-export type InsertExerciseSection = z.infer<typeof insertExerciseSectionSchema>;
+// Legacy type aliases for pages that import Insert* types
+import type { ExerciseSection, Workout, Habit, HabitCompletion } from "./src/index";
 
-// Workout Schema
-export const workoutSchema = z.object({
-  id: z.string(),
-  sectionId: z.string(),
-  exerciseType: z.string(),
-  sets: z.number(),
-  reps: z.number(),
-  weight: z.number(),
-  unit: z.string(),
-  date: z.string(), // ISO string from Date.toISOString()
-  completed: z.boolean().default(true), // Added completed status
-  userId: z.string().optional(), // Added userId
-});
-
-export const insertWorkoutSchema = workoutSchema.omit({
-  id: true,
-  date: true
-}).extend({
-  date: z.string().optional()
-});
-
-export type Workout = z.infer<typeof workoutSchema>;
-export type InsertWorkout = z.infer<typeof insertWorkoutSchema>;
-
-// Habit Schema
-export const habitSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  frequency: z.enum(['daily', 'weekly']),
-  createdAt: z.string(), // ISO string from Date.toISOString()
-  userId: z.string().optional(), // Added userId
-});
-
-export const insertHabitSchema = habitSchema.omit({
-  id: true,
-  createdAt: true
-});
-
-export type Habit = z.infer<typeof habitSchema>;
-export type InsertHabit = z.infer<typeof insertHabitSchema>;
-
-// Habit Completion Schema
-export const habitCompletionSchema = z.object({
-  id: z.string(),
-  habitId: z.string(),
-  date: z.string(), // ISO string from Date.toISOString()
-  userId: z.string().optional(), // Added userId
-});
-
-export const insertHabitCompletionSchema = habitCompletionSchema.omit({
-  id: true
-});
-
-export type HabitCompletion = z.infer<typeof habitCompletionSchema>;
-export type InsertHabitCompletion = z.infer<typeof insertHabitCompletionSchema>;
-
-// User Schema
-export const userSchema = z.object({
-  id: z.string(),
-  username: z.string(),
-  password: z.string(),
-  createdAt: z.string(),
-});
-
-export const insertUserSchema = userSchema.omit({
-  id: true,
-  createdAt: true
-});
-
-export type User = z.infer<typeof userSchema>;
-export type InsertUser = z.infer<typeof insertUserSchema>;
+export type InsertExerciseSection = Omit<ExerciseSection, "id" | "createdAt" | "updatedAt">;
+export type InsertWorkout = Omit<Workout, "id" | "createdAt" | "updatedAt">;
+export type InsertHabit = Omit<Habit, "id" | "createdAt" | "updatedAt">;
+export type InsertHabitCompletion = Omit<HabitCompletion, "id" | "createdAt">;
 
