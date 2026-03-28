@@ -4,7 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Minus, Calendar } from "lucide-react";
+import { Plus, Minus, Calendar, X } from "lucide-react";
+
+interface SetEntry {
+  reps: number;
+}
 
 interface WorkoutEntryDialogProps {
   sectionName: string;
@@ -27,19 +31,30 @@ const getTodayDate = () => {
 export default function WorkoutEntryDialog({ sectionName, onSave }: WorkoutEntryDialogProps) {
   const [open, setOpen] = useState(false);
   const [exerciseType, setExerciseType] = useState("");
-  const [sets, setSets] = useState(3);
-  const [reps, setReps] = useState(10);
+  const [setEntries, setSetEntries] = useState<SetEntry[]>([{ reps: 10 }]);
   const [weight, setWeight] = useState(20);
   const [unit, setUnit] = useState("kg");
   const [workoutDate, setWorkoutDate] = useState(getTodayDate());
 
+  const addSetEntry = () => {
+    setSetEntries((prev) => [...prev, { reps: prev[prev.length - 1]?.reps ?? 10 }]);
+  };
+
+  const removeSetEntry = (index: number) => {
+    setSetEntries((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const updateSetReps = (index: number, reps: number) => {
+    setSetEntries((prev) => prev.map((entry, i) => (i === index ? { ...entry, reps } : entry)));
+  };
+
   const handleSave = () => {
-    console.log("Saving workout:", { exerciseType, sets, reps, weight, unit, date: workoutDate });
-    onSave?.({ exerciseType, sets, reps, weight, unit, date: workoutDate });
+    for (const entry of setEntries) {
+      onSave?.({ exerciseType, sets: 1, reps: entry.reps, weight, unit, date: workoutDate });
+    }
     setOpen(false);
     setExerciseType("");
-    setSets(3);
-    setReps(10);
+    setSetEntries([{ reps: 10 }]);
     setWeight(20);
     setWorkoutDate(getTodayDate());
   };
@@ -86,74 +101,64 @@ export default function WorkoutEntryDialog({ sectionName, onSave }: WorkoutEntry
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-3">
+            <Label>Sets &amp; Reps</Label>
             <div className="space-y-2">
-              <Label htmlFor="sets">Sets</Label>
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="outline"
-                  onClick={() => setSets(Math.max(1, sets - 1))}
-                  data-testid="button-decrease-sets"
-                >
-                  <Minus className="h-4 w-4" />
-                </Button>
-                <Input
-                  id="sets"
-                  type="number"
-                  step="any"
-                  min="0"
-                  value={sets}
-                  onChange={(e) => setSets(parseFloat(e.target.value) || 0)}
-                  className="text-center"
-                  data-testid="input-sets"
-                />
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="outline"
-                  onClick={() => setSets(sets + 1)}
-                  data-testid="button-increase-sets"
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
+              {setEntries.map((entry, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground w-12 shrink-0">
+                    Set {index + 1}
+                  </span>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="outline"
+                    className="h-8 w-8"
+                    onClick={() => updateSetReps(index, Math.max(1, entry.reps - 1))}
+                  >
+                    <Minus className="h-3 w-3" />
+                  </Button>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={entry.reps}
+                    onChange={(e) => updateSetReps(index, parseInt(e.target.value) || 1)}
+                    className="text-center h-8 w-16"
+                  />
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="outline"
+                    className="h-8 w-8"
+                    onClick={() => updateSetReps(index, entry.reps + 1)}
+                  >
+                    <Plus className="h-3 w-3" />
+                  </Button>
+                  <span className="text-sm text-muted-foreground">reps</span>
+                  {setEntries.length > 1 && (
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      onClick={() => removeSetEntry(index)}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  )}
+                </div>
+              ))}
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="reps">Reps</Label>
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="outline"
-                  onClick={() => setReps(Math.max(1, reps - 1))}
-                  data-testid="button-decrease-reps"
-                >
-                  <Minus className="h-4 w-4" />
-                </Button>
-                <Input
-                  id="reps"
-                  type="number"
-                  step="any"
-                  min="0"
-                  value={reps}
-                  onChange={(e) => setReps(parseFloat(e.target.value) || 0)}
-                  className="text-center"
-                  data-testid="input-reps"
-                />
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="outline"
-                  onClick={() => setReps(reps + 1)}
-                  data-testid="button-increase-reps"
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={addSetEntry}
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Add More Sets +
+            </Button>
           </div>
 
           <div className="space-y-2">

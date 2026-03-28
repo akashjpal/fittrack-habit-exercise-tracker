@@ -5,3 +5,17 @@ server/public
 vite.config.ts.*
 *.tar.gz
 .env
+# InsForge & AI agent skills
+.insforge
+.agent
+.agents
+.augment
+.claude
+.cline
+.github/copilot*
+.kilocode
+.qoder
+.qwen
+.roo
+.trae
+.windsurf
