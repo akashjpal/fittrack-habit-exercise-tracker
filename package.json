@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "type": "module",
   "license": "MIT",
+  "workspaces": [
+    "shared"
+  ],
   "scripts": {
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "dev:client": "vite",
@@ -13,6 +16,7 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
+    "@fittrack/shared": "*",
     "@fontsource/dm-sans": "^5.2.8",
     "@fontsource/inter": "^5.2.8",
     "@google/generative-ai": "^0.24.1",
