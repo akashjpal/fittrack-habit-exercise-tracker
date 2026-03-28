@@ -5,7 +5,7 @@ import { AppError } from "../utils/errors";
 import fs from "fs";
 
 export class AIController {
-    constructor(private readonly aiService: AIService) {}
+    constructor(private readonly aiService: AIService) { }
 
     fitCheck = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
         try {

@@ -3,7 +3,7 @@ import type { AuthenticatedRequest } from "../middleware/auth.middleware";
 import type { SectionService } from "../services/section.service";
 
 export class SectionController {
-    constructor(private readonly sectionService: SectionService) {}
+    constructor(private readonly sectionService: SectionService) { }
 
     getAll = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
         try {

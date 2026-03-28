@@ -3,7 +3,7 @@ import type { AuthenticatedRequest } from "../middleware/auth.middleware";
 import type { HabitService } from "../services/habit.service";
 
 export class HabitController {
-    constructor(private readonly habitService: HabitService) {}
+    constructor(private readonly habitService: HabitService) { }
 
     getAll = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
         try {

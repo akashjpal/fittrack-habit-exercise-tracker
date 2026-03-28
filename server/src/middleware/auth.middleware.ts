@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { createUserClient } from "../config/insforge";
 import { AppError } from "../utils/errors";
+import { logger } from "../utils/logger";
 
 export interface AuthenticatedRequest extends Request {
     userId: string;
@@ -22,15 +23,16 @@ export async function authMiddleware(
 
         const token = authHeader.slice(7);
         const userClient = createUserClient(token);
-        const user = await userClient.auth.getCurrentUser();
+        const { data, error } = await userClient.auth.getCurrentUser();
 
-        if (!user) {
+        if (error || !data?.user) {
+            logger.warn(`Auth: getCurrentUser failed: ${JSON.stringify(error)}`, "Auth");
             throw AppError.unauthorized("Invalid or expired token");
         }
 
         const authReq = req as AuthenticatedRequest;
-        authReq.userId = user.id;
-        authReq.userEmail = user.email;
+        authReq.userId = data.user.id;
+        authReq.userEmail = data.user.email;
         authReq.accessToken = token;
 
         next();
@@ -38,6 +40,7 @@ export async function authMiddleware(
         if (err instanceof AppError) {
             next(err);
         } else {
+            logger.error(`Auth error: ${(err as Error).message}`, "Auth");
             next(AppError.unauthorized("Authentication failed"));
         }
     }

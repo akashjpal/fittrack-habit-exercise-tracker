@@ -44,7 +44,7 @@ export class AnalyticsService {
         private readonly workoutRepo: IWorkoutRepository,
         private readonly sectionRepo: ISectionRepository,
         private readonly habitRepo: IHabitRepository,
-    ) {}
+    ) { }
 
     async getDashboard(userId: string): Promise<DashboardData> {
         const [sections, workouts, completions] = await Promise.all([

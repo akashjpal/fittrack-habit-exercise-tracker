@@ -3,7 +3,7 @@ import type { AuthenticatedRequest } from "../middleware/auth.middleware";
 import type { AnalyticsService } from "../services/analytics.service";
 
 export class AnalyticsController {
-    constructor(private readonly analyticsService: AnalyticsService) {}
+    constructor(private readonly analyticsService: AnalyticsService) { }
 
     getDashboard = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
         try {

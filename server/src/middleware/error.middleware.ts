@@ -9,6 +9,7 @@ export function errorMiddleware(
     _next: NextFunction,
 ): void {
     if (err instanceof AppError) {
+        logger.warn(`${err.code}: ${err.message}`, "ErrorMiddleware");
         res.status(err.statusCode).json({
             error: {
                 code: err.code,
@@ -18,11 +19,11 @@ export function errorMiddleware(
         return;
     }
 
-    logger.error(`Unhandled error: ${err.message}`, "ErrorMiddleware");
+    logger.error(`Unhandled error: ${err.message}\n${err.stack}`, "ErrorMiddleware");
     res.status(500).json({
         error: {
             code: "INTERNAL_ERROR",
-            message: "An unexpected error occurred",
+            message: err.message || "An unexpected error occurred",
         },
     });
 }

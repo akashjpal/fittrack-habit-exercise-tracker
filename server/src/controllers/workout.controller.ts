@@ -3,7 +3,7 @@ import type { AuthenticatedRequest } from "../middleware/auth.middleware";
 import type { WorkoutService } from "../services/workout.service";
 
 export class WorkoutController {
-    constructor(private readonly workoutService: WorkoutService) {}
+    constructor(private readonly workoutService: WorkoutService) { }
 
     getAll = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
         try {

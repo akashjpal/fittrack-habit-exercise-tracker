@@ -2,7 +2,7 @@ import type { IHabitRepository } from "../repositories/interfaces/IHabitReposito
 import type { HabitRow, CreateHabitDto, HabitCompletionRow, CreateCompletionDto } from "@fittrack/shared";
 
 export class HabitService {
-    constructor(private readonly habitRepo: IHabitRepository) {}
+    constructor(private readonly habitRepo: IHabitRepository) { }
 
     async getAllHabits(userId: string): Promise<HabitRow[]> {
         return this.habitRepo.findAllByUser(userId);

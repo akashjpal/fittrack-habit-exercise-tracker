@@ -2,7 +2,7 @@ import type { IWorkoutRepository } from "../repositories/interfaces/IWorkoutRepo
 import type { WorkoutRow, CreateWorkoutDto } from "@fittrack/shared";
 
 export class WorkoutService {
-    constructor(private readonly workoutRepo: IWorkoutRepository) {}
+    constructor(private readonly workoutRepo: IWorkoutRepository) { }
 
     async getAllWorkouts(userId: string): Promise<WorkoutRow[]> {
         return this.workoutRepo.findAllByUser(userId);

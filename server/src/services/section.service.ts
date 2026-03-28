@@ -2,7 +2,7 @@ import type { ISectionRepository } from "../repositories/interfaces/ISectionRepo
 import type { ExerciseSectionRow, CreateSectionDto, UpdateSectionDto } from "@fittrack/shared";
 
 export class SectionService {
-    constructor(private readonly sectionRepo: ISectionRepository) {}
+    constructor(private readonly sectionRepo: ISectionRepository) { }
 
     async getAllSections(userId: string): Promise<ExerciseSectionRow[]> {
         return this.sectionRepo.findAllByUser(userId);
