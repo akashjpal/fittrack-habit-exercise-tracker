@@ -8,8 +8,8 @@
     "dev:client": "vite",
     "dev:server": "cd server && tsx watch src/index.ts",
     "build": "vite build",
-    "build:server": "cd server && tsc",
-    "start": "cd server && node dist/index.js",
+    "build:server": "tsc -p ./tsconfig.json",
+    "start": "node server/dist/index.js",
     "check": "tsc --noEmit"
   },
   "dependencies": {
