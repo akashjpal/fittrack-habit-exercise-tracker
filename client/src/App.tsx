@@ -14,11 +14,10 @@ import Landing from "@/pages/Landing";
 import Login from "@/pages/auth/Login";
 import Signup from "@/pages/auth/Signup";
 import ThemeToggle from "@/components/ThemeToggle";
-import { LayoutDashboard, Dumbbell, TrendingUp, Brain, Loader2, History, Library } from "lucide-react";
+import { LayoutDashboard, Dumbbell, TrendingUp, Brain, Loader2, Library } from "lucide-react";
 import { AuthProvider, useAuth } from "./lib/auth";
-import { GoogleOAuthProvider } from "@react-oauth/google";
 
-function ProtectedRoute({ component: Component, path }: { component: React.ComponentType<any>, path: string }) {
+function ProtectedRoute({ component: Component, path }: { component: React.ComponentType<any>; path: string }) {
   const { user, isLoading } = useAuth();
   const [, setLocation] = useLocation();
 
@@ -31,11 +30,6 @@ function ProtectedRoute({ component: Component, path }: { component: React.Compo
   }
 
   if (!user) {
-    // Redirect to login but keep the path? For now just simple redirect.
-    // Ideally we'd use a Redirect component or useEffect, but returning null + setLocation works in wouter often,
-    // though better to render a Redirect component if wouter has one, or just use effect.
-    // Wouter doesn't have a Redirect component built-in in v2 usually, but let's check.
-    // Safer to just render nothing and redirect.
     setTimeout(() => setLocation("/login"), 0);
     return null;
   }
@@ -50,7 +44,6 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/signup" component={Signup} />
 
-      {/* Protected Routes */}
       <ProtectedRoute path="/dashboard" component={Dashboard} />
       <ProtectedRoute path="/exercises" component={Exercises} />
       <ProtectedRoute path="/library" component={SectionLibrary} />
@@ -67,13 +60,7 @@ function Navigation() {
   const [location] = useLocation();
   const { user, logout } = useAuth();
 
-  // Always hide navigation on landing page (it has its own nav)
-  if (location === '/') {
-    return null;
-  }
-
-  // Hide on login/signup pages
-  if (['/login', '/signup'].includes(location)) {
+  if (location === "/" || ["/login", "/signup"].includes(location)) {
     return null;
   }
 
@@ -81,7 +68,6 @@ function Navigation() {
     { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { path: "/exercises", label: "Exercises", icon: Dumbbell },
     { path: "/library", label: "Library", icon: Library },
-    // { path: "/history", label: "History", icon: History }, // Hidden for now
     { path: "/progress", label: "Progress", icon: TrendingUp },
     { path: "/ai-fit-check", label: "AI Fit Check", icon: Brain },
   ];
@@ -91,7 +77,7 @@ function Navigation() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center gap-8">
-            <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-2 hover-elevate px-2 py-1 rounded-md" data-testid="link-home">
+            <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-2 hover-elevate px-2 py-1 rounded-md">
               <Dumbbell className="h-6 w-6 text-primary" />
               <span className="text-xl font-bold">FitTrack</span>
             </Link>
@@ -105,11 +91,9 @@ function Navigation() {
                     <Link
                       key={link.path}
                       href={link.path}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-colors hover-elevate ${isActive
-                        ? 'text-foreground bg-muted'
-                        : 'text-muted-foreground'
-                        }`}
-                      data-testid={`link-${link.label.toLowerCase()}`}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-colors hover-elevate ${
+                        isActive ? "text-foreground bg-muted" : "text-muted-foreground"
+                      }`}
                     >
                       <Icon className="h-4 w-4" />
                       {link.label}
@@ -142,11 +126,9 @@ function Navigation() {
                 <Link
                   key={link.path}
                   href={link.path}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors hover-elevate ${isActive
-                    ? 'text-foreground bg-muted'
-                    : 'text-muted-foreground'
-                    }`}
-                  data-testid={`link-mobile-${link.label.toLowerCase()}`}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors hover-elevate ${
+                    isActive ? "text-foreground bg-muted" : "text-muted-foreground"
+                  }`}
                 >
                   <Icon className="h-4 w-4" />
                   {link.label}
@@ -160,36 +142,30 @@ function Navigation() {
   );
 }
 
-function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || ""}>
-          <TooltipProvider>
-            <div className="min-h-screen bg-background">
-              <Navigation />
-              <MainLayout />
-            </div>
-            <Toaster />
-          </TooltipProvider>
-        </GoogleOAuthProvider>
-      </AuthProvider>
-    </QueryClientProvider>
-  );
-}
-
 function MainLayout() {
   const [location] = useLocation();
-  const isLanding = location === "/";
-
-  if (isLanding) {
-    return <Router />;
-  }
+  if (location === "/") return <Router />;
 
   return (
     <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-7xl">
       <Router />
     </main>
+  );
+}
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <TooltipProvider>
+          <div className="min-h-screen bg-background">
+            <Navigation />
+            <MainLayout />
+          </div>
+          <Toaster />
+        </TooltipProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 
