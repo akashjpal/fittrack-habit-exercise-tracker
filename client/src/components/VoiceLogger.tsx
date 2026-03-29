@@ -108,9 +108,13 @@ export default function VoiceLogger({ weekStart, weekEnd }: VoiceLoggerProps) {
 
         try {
             const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
-            const response = await fetch(`${baseUrl}/api/voice-log`, {
+            const sessionDataStr = localStorage.getItem("fittrack_session");
+            const token = sessionDataStr ? JSON.parse(sessionDataStr).token : null;
+
+            const response = await fetch(`${baseUrl}/api/ai/voice-log`, {
                 method: "POST",
                 credentials: "include",
+                headers: token ? { "Authorization": `Bearer ${token}` } : undefined,
                 body: formData,
             });
 
