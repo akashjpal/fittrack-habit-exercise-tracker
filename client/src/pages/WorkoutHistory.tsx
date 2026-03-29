@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { History, Search, Calendar, Dumbbell, CheckCircle2, Circle, TrendingUp, BarChart3 } from "lucide-react";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
-import type { Workout, ExerciseSection } from "@shared/schema";
+import type { Workout, ExerciseSection } from "@/shared/schema";
 import ExerciseProgressionChart from "@/components/ExerciseProgressionChart";
 import SectionProgressChart from "@/components/SectionProgressChart";
 
@@ -87,12 +87,23 @@ export default function WorkoutHistory() {
         }
     }, [exerciseTypes, selectedExercise]);
 
+    // Fetch section instances for the selected library section
+    const { data: linkedSectionInstances = [] } = useQuery<ExerciseSection[]>({
+        queryKey: ["/api/sections/by-library", selectedSection],
+        queryFn: () => {
+            const baseUrl = import.meta.env.VITE_API_BASE_URL || window.location.origin;
+            return apiRequest("GET", `${baseUrl}/api/sections/by-library/${selectedSection}`).then(res => res.json());
+        },
+        enabled: selectedSection !== "all",
+    });
+
+    // Build a set of section IDs linked to the selected library section for fast lookup
+    const linkedSectionIds = useMemo(() => {
+        return new Set(linkedSectionInstances.map(s => s.id));
+    }, [linkedSectionInstances]);
+
     // Filter workouts
     const filteredWorkouts = useMemo(() => {
-        // Get the selected library section name for matching
-        const selectedLibSection = librarySections.find(s => s.id === selectedSection);
-        const selectedSectionNameForFilter = selectedLibSection?.name;
-
         return workouts
             .filter(workout => {
                 const workoutDate = new Date(workout.date);
@@ -100,17 +111,13 @@ export default function WorkoutHistory() {
                 const matchesSearch = searchQuery === "" ||
                     workout.exerciseType.toLowerCase().includes(searchQuery.toLowerCase());
 
-                // Match workouts by section name (since weekly sections share the library section's name)
-                let matchesSection = selectedSection === "all";
-                if (!matchesSection && selectedSectionNameForFilter) {
-                    const workoutSectionName = getSectionName(workout.sectionId);
-                    matchesSection = workoutSectionName === selectedSectionNameForFilter;
-                }
+                // Match by library_section_id-linked instances
+                const matchesSection = selectedSection === "all" || linkedSectionIds.has(workout.sectionId);
 
                 return inDateRange && matchesSearch && matchesSection;
             })
             .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    }, [workouts, startDate, endDate, searchQuery, selectedSection, librarySections, allSections]);
+    }, [workouts, startDate, endDate, searchQuery, selectedSection, linkedSectionIds]);
 
     // Get workouts for selected exercise (for charts)
     const exerciseWorkouts = useMemo(() => {

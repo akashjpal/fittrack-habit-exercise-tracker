@@ -2,7 +2,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import HabitTracker from "@/components/HabitTracker";
 import AddHabitDialog from "@/components/AddHabitDialog";
-import type { Habit, HabitCompletion } from "@shared/schema";
+import type { Habit, HabitCompletion } from "@/shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { startOfDay, isSameDay } from "date-fns";
 

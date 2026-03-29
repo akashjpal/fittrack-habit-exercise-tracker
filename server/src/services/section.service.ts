@@ -1,5 +1,5 @@
 import type { ISectionRepository } from "../repositories/interfaces/ISectionRepository";
-import type { ExerciseSectionRow, CreateSectionDto, UpdateSectionDto } from "@fittrack/shared";
+import type { ExerciseSectionRow, CreateSectionDto, UpdateSectionDto } from "../shared/index";
 
 export class SectionService {
     constructor(private readonly sectionRepo: ISectionRepository) { }
@@ -22,6 +22,10 @@ export class SectionService {
 
     async getActiveLibrary(userId: string): Promise<ExerciseSectionRow[]> {
         return this.sectionRepo.findActiveLibrary(userId);
+    }
+
+    async getSectionsByLibraryId(libraryId: string): Promise<ExerciseSectionRow[]> {
+        return this.sectionRepo.findByLibraryId(libraryId);
     }
 
     async createSection(userId: string, dto: CreateSectionDto): Promise<ExerciseSectionRow> {

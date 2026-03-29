@@ -2,7 +2,7 @@ import { Router } from "express";
 import type { HabitController } from "../controllers/habit.controller";
 import { authMiddleware } from "../middleware/auth.middleware";
 import { validateBody } from "../middleware/validation.middleware";
-import { createHabitSchema, createCompletionSchema } from "@fittrack/shared";
+import { createHabitSchema, createCompletionSchema } from "../shared/index";
 
 export function createHabitRoutes(controller: HabitController): Router {
     const router = Router();

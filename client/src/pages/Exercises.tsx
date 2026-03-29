@@ -5,7 +5,7 @@ import ExerciseSectionCard from "@/components/ExerciseSectionCard";
 import AddSectionDialog from "@/components/AddSectionDialog";
 import WeekRangeSelector from "@/components/WeekRangeSelector";
 import VoiceLogger from "@/components/VoiceLogger";
-import type { ExerciseSection, Workout } from "@shared/schema";
+import type { ExerciseSection, Workout } from "@/shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { startOfWeek, endOfWeek } from "date-fns";
 import {
@@ -70,6 +70,12 @@ export default function Exercises() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/sections"] });
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const key = query.queryKey;
+          return Array.isArray(key) && key[0] === "/api/sections/week";
+        }
+      });
       queryClient.invalidateQueries({ queryKey: ["/api/analytics/dashboard"] });
       toast({
         title: "Section added",
@@ -155,6 +161,12 @@ export default function Exercises() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/sections"] });
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const key = query.queryKey;
+          return Array.isArray(key) && key[0] === "/api/sections/week";
+        }
+      });
       queryClient.invalidateQueries({ queryKey: ["/api/analytics/dashboard"] });
       toast({
         title: "Section deleted",

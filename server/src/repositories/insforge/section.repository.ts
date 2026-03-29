@@ -1,5 +1,5 @@
 import type { ISectionRepository } from "../interfaces/ISectionRepository";
-import type { ExerciseSectionRow, CreateSectionDto, UpdateSectionDto } from "@fittrack/shared";
+import type { ExerciseSectionRow, CreateSectionDto, UpdateSectionDto } from "../../shared/index";
 import { insforgeAdmin } from "../../config/insforge";
 import { AppError } from "../../utils/errors";
 
@@ -11,6 +11,7 @@ export class InsForgeSectionRepository implements ISectionRepository {
             .from(this.table)
             .select()
             .eq("user_id", userId)
+            .eq("is_library", false)
             .eq("archived", false)
             .order("date", { ascending: false });
 
@@ -23,6 +24,7 @@ export class InsForgeSectionRepository implements ISectionRepository {
             .from(this.table)
             .select()
             .eq("user_id", userId)
+            .eq("is_library", false)
             .gte("date", startDate)
             .lte("date", endDate)
             .eq("archived", false)
@@ -63,6 +65,18 @@ export class InsForgeSectionRepository implements ISectionRepository {
             .eq("is_library", true)
             .eq("archived", false)
             .order("name", { ascending: true });
+
+        if (error) throw AppError.internal(error.message);
+        return data as ExerciseSectionRow[];
+    }
+
+    async findByLibraryId(libraryId: string): Promise<ExerciseSectionRow[]> {
+        const { data, error } = await insforgeAdmin.database
+            .from(this.table)
+            .select()
+            .eq("library_section_id", libraryId)
+            .eq("is_library", false)
+            .order("date", { ascending: false });
 
         if (error) throw AppError.internal(error.message);
         return data as ExerciseSectionRow[];

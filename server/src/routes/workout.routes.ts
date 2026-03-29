@@ -2,7 +2,7 @@ import { Router } from "express";
 import type { WorkoutController } from "../controllers/workout.controller";
 import { authMiddleware } from "../middleware/auth.middleware";
 import { validateBody } from "../middleware/validation.middleware";
-import { createWorkoutSchema, batchCreateWorkoutSchema } from "@fittrack/shared";
+import { createWorkoutSchema, batchCreateWorkoutSchema } from "../shared/index";
 
 export function createWorkoutRoutes(controller: WorkoutController): Router {
     const router = Router();

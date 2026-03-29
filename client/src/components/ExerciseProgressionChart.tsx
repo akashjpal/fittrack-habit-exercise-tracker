@@ -12,7 +12,7 @@ import {
     ResponsiveContainer,
     Legend,
 } from "recharts";
-import type { Workout } from "@shared/schema";
+import type { Workout } from "@/shared/schema";
 
 interface ExerciseProgressionChartProps {
     exerciseName: string;

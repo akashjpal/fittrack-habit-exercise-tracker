@@ -1,4 +1,4 @@
-import type { WorkoutRow, CreateWorkoutDto } from "@fittrack/shared";
+import type { WorkoutRow, CreateWorkoutDto } from "../../shared/index";
 
 export interface IWorkoutRepository {
     findAllByUser(userId: string): Promise<WorkoutRow[]>;

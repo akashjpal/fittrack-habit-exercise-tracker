@@ -1,5 +1,5 @@
 import type { IHabitRepository } from "../interfaces/IHabitRepository";
-import type { HabitRow, CreateHabitDto, HabitCompletionRow, CreateCompletionDto } from "@fittrack/shared";
+import type { HabitRow, CreateHabitDto, HabitCompletionRow, CreateCompletionDto } from "../../shared/index";
 import { insforgeAdmin } from "../../config/insforge";
 import { AppError } from "../../utils/errors";
 

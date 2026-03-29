@@ -1,6 +1,6 @@
 /**
- * Backward-compatible re-export of all types.
- * Client code can continue importing from "@shared/schema".
+ * Shared schemas and types.
+ * Re-exports all types from the schemas directory.
  * Types use camelCase to match the API response format.
  */
 export type {
@@ -44,4 +44,3 @@ export type InsertExerciseSection = Omit<ExerciseSection, "id" | "createdAt" | "
 export type InsertWorkout = Omit<Workout, "id" | "createdAt" | "updatedAt">;
 export type InsertHabit = Omit<Habit, "id" | "createdAt" | "updatedAt">;
 export type InsertHabitCompletion = Omit<HabitCompletion, "id" | "createdAt">;
-

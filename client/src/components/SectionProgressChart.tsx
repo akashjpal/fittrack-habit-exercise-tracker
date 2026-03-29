@@ -12,7 +12,7 @@ import {
     ResponsiveContainer,
 } from "recharts";
 import { BarChart3 } from "lucide-react";
-import type { Workout } from "@shared/schema";
+import type { Workout } from "@/shared/schema";
 
 interface SectionProgressChartProps {
     sectionName: string;
