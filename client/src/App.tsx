@@ -14,7 +14,7 @@ import Landing from "@/pages/Landing";
 import Login from "@/pages/auth/Login";
 import Signup from "@/pages/auth/Signup";
 import ThemeToggle from "@/components/ThemeToggle";
-import { LayoutDashboard, Dumbbell, TrendingUp, Brain, Loader2, Library } from "lucide-react";
+import { LayoutDashboard, Dumbbell, TrendingUp, Brain, Loader2, Library, Clock } from "lucide-react";
 import { AuthProvider, useAuth } from "./lib/auth";
 
 function ProtectedRoute({ component: Component, path }: { component: React.ComponentType<any>; path: string }) {
@@ -68,6 +68,7 @@ function Navigation() {
     { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { path: "/exercises", label: "Exercises", icon: Dumbbell },
     { path: "/library", label: "Library", icon: Library },
+    { path: "/history", label: "History", icon: Clock },
     { path: "/progress", label: "Progress", icon: TrendingUp },
     { path: "/ai-fit-check", label: "AI Fit Check", icon: Brain },
   ];

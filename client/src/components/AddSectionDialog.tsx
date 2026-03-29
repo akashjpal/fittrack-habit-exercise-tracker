@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Library } from "lucide-react";
-import type { ExerciseSection } from "@shared/schema";
+import type { ExerciseSection } from "@/shared/schema";
 import { Link } from "wouter";
 
 interface AddSectionDialogProps {

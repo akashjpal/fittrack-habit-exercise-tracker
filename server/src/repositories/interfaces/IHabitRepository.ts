@@ -1,4 +1,4 @@
-import type { HabitRow, CreateHabitDto, HabitCompletionRow, CreateCompletionDto } from "@fittrack/shared";
+import type { HabitRow, CreateHabitDto, HabitCompletionRow, CreateCompletionDto } from "../../shared/index";
 
 export interface IHabitRepository {
     findAllByUser(userId: string): Promise<HabitRow[]>;

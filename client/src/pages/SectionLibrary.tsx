@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Library, Plus, Archive, ArchiveRestore, Pencil, Trash2, Dumbbell } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import type { ExerciseSection } from "@shared/schema";
+import type { ExerciseSection } from "@/shared/schema";
 import {
     AlertDialog,
     AlertDialogAction,

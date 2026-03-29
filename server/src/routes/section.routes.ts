@@ -2,7 +2,7 @@ import { Router } from "express";
 import type { SectionController } from "../controllers/section.controller";
 import { authMiddleware } from "../middleware/auth.middleware";
 import { validateBody } from "../middleware/validation.middleware";
-import { createSectionSchema, updateSectionSchema } from "@fittrack/shared";
+import { createSectionSchema, updateSectionSchema } from "../shared/index";
 
 export function createSectionRoutes(controller: SectionController): Router {
     const router = Router();
@@ -12,6 +12,7 @@ export function createSectionRoutes(controller: SectionController): Router {
     // Library routes must come before /:id to avoid matching "library" as an id
     router.get("/library", controller.getLibrary as any);
     router.get("/library/active", controller.getActiveLibrary as any);
+    router.get("/by-library/:libraryId", controller.getByLibraryId as any);
     router.post("/library", controller.createLibrary as any);
 
     router.get("/", controller.getAll as any);

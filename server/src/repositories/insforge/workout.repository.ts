@@ -1,5 +1,5 @@
 import type { IWorkoutRepository } from "../interfaces/IWorkoutRepository";
-import type { WorkoutRow, CreateWorkoutDto } from "@fittrack/shared";
+import type { WorkoutRow, CreateWorkoutDto } from "../../shared/index";
 import { insforgeAdmin } from "../../config/insforge";
 import { AppError } from "../../utils/errors";
 

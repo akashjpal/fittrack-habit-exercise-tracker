@@ -1,10 +1,17 @@
 node_modules
 dist
 .DS_Store
-server/public
-vite.config.ts.*
 *.tar.gz
 .env
+
+# Client & server each have their own node_modules
+client/node_modules
+client/dist
+server/node_modules
+server/dist
+server/uploads/*
+!server/uploads/.gitkeep
+
 # InsForge & AI agent skills
 .insforge
 .agent

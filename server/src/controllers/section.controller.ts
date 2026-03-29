@@ -51,6 +51,15 @@ export class SectionController {
         }
     };
 
+    getByLibraryId = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const sections = await this.sectionService.getSectionsByLibraryId(req.params.libraryId);
+            res.json(sections);
+        } catch (err) {
+            next(err);
+        }
+    };
+
     create = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
         try {
             const section = await this.sectionService.createSection(req.userId, req.body);

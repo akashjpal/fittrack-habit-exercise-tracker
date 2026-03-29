@@ -1,5 +1,5 @@
 import type { IHabitRepository } from "../repositories/interfaces/IHabitRepository";
-import type { HabitRow, CreateHabitDto, HabitCompletionRow, CreateCompletionDto } from "@fittrack/shared";
+import type { HabitRow, CreateHabitDto, HabitCompletionRow, CreateCompletionDto } from "../shared/index";
 
 export class HabitService {
     constructor(private readonly habitRepo: IHabitRepository) { }

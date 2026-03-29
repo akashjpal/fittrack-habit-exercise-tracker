@@ -1,6 +1,6 @@
 [build]
-  publish = "dist/public"
-  command = "npm run build:client"
+  publish = "dist"
+  command = "npm run build"
 
 [[headers]]
   for = "/api/*"
