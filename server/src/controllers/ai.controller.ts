@@ -73,4 +73,17 @@ export class AIController {
             next(err);
         }
     };
+
+    plateauDetection = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const { libraryId } = req.body;
+            if (!libraryId) {
+                throw AppError.badRequest("libraryId is required");
+            }
+            const result = await this.aiService.detectPlateauForLibrary(req.userId, libraryId);
+            res.json(result);
+        } catch (err) {
+            next(err);
+        }
+    };
 }

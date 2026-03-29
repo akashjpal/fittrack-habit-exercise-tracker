@@ -30,6 +30,7 @@ export function createAIRoutes(controller: AIController): Router {
     router.post("/generate-workout", controller.generateWorkout as any);
     router.post("/generate-habits", controller.generateHabits as any);
     router.post("/voice-log", upload.single("audio") as any, controller.voiceLog as any);
+    router.post("/plateau-detection", controller.plateauDetection as any);
 
     return router;
 }

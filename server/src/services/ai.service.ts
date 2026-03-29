@@ -42,6 +42,18 @@ interface ParsedVoiceLog {
     }>;
 }
 
+interface PlateauResult {
+    plateauDetected: boolean;
+    summary: string;
+    exercises: Array<{
+        name: string;
+        status: "plateau" | "progressing" | "declining";
+        insight: string;
+        suggestion: string;
+    }>;
+    recommendations: string[];
+}
+
 export class AIService {
     private genAI: GoogleGenerativeAI;
 
@@ -189,6 +201,86 @@ Only return valid JSON, no markdown or extra text.`;
         const text = result.response.text();
 
         return this.parseJSON<ParsedVoiceLog>(text);
+    }
+
+    async detectPlateauForLibrary(userId: string, libraryId: string): Promise<PlateauResult> {
+        // 1. Get all section instances linked to this library template
+        const sectionInstances = await this.sectionRepo.findByLibraryId(libraryId);
+
+        if (sectionInstances.length === 0) {
+            return {
+                plateauDetected: false,
+                summary: "No workout sessions found for this section. Add workouts to enable plateau detection.",
+                exercises: [],
+                recommendations: ["Start logging workouts for this section to track your progress."],
+            };
+        }
+
+        // 2. Gather all workouts from those section instances
+        const allWorkouts: Array<{ exercise_type: string; sets: number; reps: number; weight: number; unit: string; date: string }> = [];
+        for (const section of sectionInstances) {
+            const workouts = await this.workoutRepo.findBySectionId(section.id);
+            for (const w of workouts) {
+                allWorkouts.push({
+                    exercise_type: w.exercise_type,
+                    sets: w.sets,
+                    reps: w.reps,
+                    weight: w.weight,
+                    unit: w.unit,
+                    date: w.date,
+                });
+            }
+        }
+
+        // Sort by date ascending for trend analysis
+        allWorkouts.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+        // 3. Call AI analysis
+        return this.detectPlateau(allWorkouts);
+    }
+
+    async detectPlateau(workouts: Array<{ exercise_type: string; sets: number; reps: number; weight: number; unit: string; date: string }>): Promise<PlateauResult> {
+        if (workouts.length < 3) {
+            return {
+                plateauDetected: false,
+                summary: "Not enough workout data to analyze. Log more sessions to detect plateaus.",
+                exercises: [],
+                recommendations: ["Continue logging your workouts consistently to enable plateau detection."],
+            };
+        }
+
+        const prompt = `You are an expert strength coach analyzing workout history for plateaus and stagnation.
+
+Workout History (ordered by date):
+${JSON.stringify(workouts, null, 2)}
+
+Analyze each exercise for:
+1. Whether weight/volume has stalled (plateau)
+2. Whether performance is declining
+3. Progressive overload trends
+
+Respond in this exact JSON format:
+{
+  "plateauDetected": true,
+  "summary": "Brief 1-2 sentence overall assessment",
+  "exercises": [
+    {
+      "name": "Exercise Name",
+      "status": "plateau" | "progressing" | "declining",
+      "insight": "Brief insight about this exercise's trend",
+      "suggestion": "Specific actionable suggestion"
+    }
+  ],
+  "recommendations": ["recommendation 1", "recommendation 2", "recommendation 3"]
+}
+
+Only return valid JSON, no markdown or extra text.`;
+
+        const model = this.genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+        const result = await model.generateContent(prompt);
+        const text = result.response.text();
+
+        return this.parseJSON<PlateauResult>(text);
     }
 
     private parseJSON<T>(text: string): T {

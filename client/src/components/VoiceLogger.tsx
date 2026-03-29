@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Mic, Square, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -30,7 +30,7 @@ export default function VoiceLogger({ weekStart, weekEnd }: VoiceLoggerProps) {
     const { toast } = useToast();
     const queryClient = useQueryClient();
 
-    const { data: sections } = useQuery<ExerciseSection[]>({
+    const { data: sections = [] } = useQuery<ExerciseSection[]>({
         queryKey: ["/api/sections/week", weekStart, weekEnd],
         queryFn: () => {
             const baseUrl = import.meta.env.VITE_API_BASE_URL || window.location.origin;
@@ -41,13 +41,11 @@ export default function VoiceLogger({ weekStart, weekEnd }: VoiceLoggerProps) {
         },
     });
 
-    // Reset selection if the selected section is not in the current week's sections
+    // Reset selection if the selected section is not in the sections list
     useEffect(() => {
-        if (sections) {
-            const isValidSection = sections.find(s => s.id === selectedSectionId);
-            if (!isValidSection) {
-                setSelectedSectionId("");
-            }
+        const isValidSection = sections.find(s => s.id === selectedSectionId);
+        if (!isValidSection) {
+            setSelectedSectionId("");
         }
     }, [sections, selectedSectionId]);
 
