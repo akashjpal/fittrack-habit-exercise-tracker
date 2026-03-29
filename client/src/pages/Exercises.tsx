@@ -42,10 +42,12 @@ export default function Exercises() {
   };
 
   const { data: sections, isLoading: sectionsLoading } = useQuery<ExerciseSection[]>({
-    queryKey: ["/api/sections"],
+    queryKey: ["/api/sections/week", weekStart, weekEnd],
     queryFn: () => {
       const baseUrl = import.meta.env.VITE_API_BASE_URL || window.location.origin;
-      const url = new URL(baseUrl + "/api/sections");
+      const url = new URL(baseUrl + "/api/sections/week");
+      url.searchParams.set("startDate", weekStart.toISOString());
+      url.searchParams.set("endDate", weekEnd.toISOString());
       return apiRequest("GET", url.toString()).then(res => res.json());
     },
   });
