@@ -9,7 +9,7 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
-    "@google/generative-ai": "^0.24.1",
+    "groq-sdk": "^0.12.0",
     "@insforge/sdk": "latest",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",

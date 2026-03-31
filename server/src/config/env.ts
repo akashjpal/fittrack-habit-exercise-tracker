@@ -18,5 +18,5 @@ export const env = {
     INSFORGE_BASE_URL: required("INSFORGE_BASE_URL"),
     INSFORGE_ANON_KEY: required("INSFORGE_ANON_KEY"),
     INSFORGE_SERVICE_KEY: required("INSFORGE_SERVICE_KEY"),
-    GEMINI_API_KEY: process.env.GEMINI_API_KEY || "",
+    GROQ_API_KEY: process.env.GROQ_API_KEY || "",
 };
