@@ -18,7 +18,9 @@ export class AIController {
 
     analyzeHabits = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const { activeTasks, completedTasks } = req.body;
+            // After caseTransformMiddleware, camelCase keys become snake_case
+            const activeTasks = req.body.active_tasks || req.body.activeTasks;
+            const completedTasks = req.body.completed_tasks || req.body.completedTasks;
             const result = await this.aiService.analyzeHabits(activeTasks || [], completedTasks || []);
             res.json(result);
         } catch (err) {
@@ -78,7 +80,8 @@ export class AIController {
 
     plateauDetection = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const { libraryId } = req.body;
+            // After caseTransformMiddleware, camelCase "libraryId" becomes "library_id"
+            const libraryId = req.body.library_id || req.body.libraryId;
             if (!libraryId) {
                 throw AppError.badRequest("libraryId is required");
             }
