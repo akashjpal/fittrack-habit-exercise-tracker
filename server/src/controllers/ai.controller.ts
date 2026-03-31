@@ -59,17 +59,19 @@ export class AIController {
                 throw AppError.badRequest("Audio file is required");
             }
 
-            const audioBuffer = fs.readFileSync(file.path);
-            const base64Audio = audioBuffer.toString("base64");
             const mimeType = file.mimetype || "audio/webm";
 
-            const result = await this.aiService.processVoiceLog(base64Audio, mimeType);
+            const result = await this.aiService.processVoiceLog(file.path, mimeType);
 
             // Cleanup uploaded file
             fs.unlinkSync(file.path);
 
             res.json(result);
         } catch (err) {
+            // Cleanup uploaded file on error too
+            if (req.file?.path) {
+                try { fs.unlinkSync(req.file.path); } catch { }
+            }
             next(err);
         }
     };

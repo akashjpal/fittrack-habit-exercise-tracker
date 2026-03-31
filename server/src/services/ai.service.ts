@@ -1,4 +1,5 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import Groq from "groq-sdk";
+import fs from "fs";
 import { env } from "../config/env";
 import type { IWorkoutRepository } from "../repositories/interfaces/IWorkoutRepository";
 import type { ISectionRepository } from "../repositories/interfaces/ISectionRepository";
@@ -55,17 +56,30 @@ interface PlateauResult {
 }
 
 export class AIService {
-    private genAI: GoogleGenerativeAI;
+    private groq: Groq;
 
     constructor(
         private readonly workoutRepo: IWorkoutRepository,
         private readonly sectionRepo: ISectionRepository,
         private readonly habitRepo: IHabitRepository,
     ) {
-        if (!env.GEMINI_API_KEY) {
-            throw new Error("GEMINI_API_KEY is required for AI features");
+        if (!env.GROQ_API_KEY) {
+            throw new Error("GROQ_API_KEY is required for AI features");
         }
-        this.genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
+        this.groq = new Groq({ apiKey: env.GROQ_API_KEY });
+    }
+
+    private async chatCompletion(systemPrompt: string, userPrompt: string): Promise<string> {
+        const result = await this.groq.chat.completions.create({
+            model: "llama-3.3-70b-versatile",
+            messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: userPrompt },
+            ],
+            temperature: 0,
+            response_format: { type: "json_object" },
+        });
+        return result.choices[0]?.message?.content ?? "";
     }
 
     async fitCheck(userId: string): Promise<FitCheckResult> {
@@ -76,9 +90,15 @@ export class AIService {
             this.habitRepo.findAllCompletions(userId),
         ]);
 
-        const prompt = `You are a fitness coach AI. Analyze this user's workout and habit data and provide personalized feedback.
+        const systemPrompt = `You are a fitness coach AI. Analyze the user's workout and habit data and provide personalized feedback. Respond ONLY with valid JSON in this exact format:
+{
+  "motivation": "A brief motivational message",
+  "strengths": ["strength 1", "strength 2", "strength 3"],
+  "weaknesses": ["weakness 1", "weakness 2", "weakness 3"],
+  "solutions": ["solution 1", "solution 2", "solution 3"]
+}`;
 
-Workout Data:
+        const userPrompt = `Workout Data:
 ${JSON.stringify(workouts.slice(0, 50), null, 2)}
 
 Sections:
@@ -88,42 +108,26 @@ Habits:
 ${JSON.stringify(habits, null, 2)}
 
 Habit Completions (recent):
-${JSON.stringify(completions.slice(0, 50), null, 2)}
+${JSON.stringify(completions.slice(0, 50), null, 2)}`;
 
-Respond in this exact JSON format:
-{
-  "motivation": "A brief motivational message",
-  "strengths": ["strength 1", "strength 2", "strength 3"],
-  "weaknesses": ["weakness 1", "weakness 2", "weakness 3"],
-  "solutions": ["solution 1", "solution 2", "solution 3"]
-}
-
-Only return valid JSON, no markdown or extra text.`;
-
-        const model = this.genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-        const result = await model.generateContent(prompt);
-        const text = result.response.text();
-
+        const text = await this.chatCompletion(systemPrompt, userPrompt);
         return this.parseJSON<FitCheckResult>(text);
     }
 
     async analyzeHabits(activeTasks: string[], completedTasks: string[]): Promise<{ analysis: string }> {
-        const prompt = `You are a productivity and habit coach. Analyze these tasks and provide insights.
-
-Active Tasks: ${JSON.stringify(activeTasks)}
-Completed Tasks: ${JSON.stringify(completedTasks)}
-
-Provide a brief, encouraging analysis of the user's habit patterns, what they're doing well, and suggestions for improvement. Keep it to 2-3 paragraphs.`;
-
-        const model = this.genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-        const result = await model.generateContent(prompt);
-        return { analysis: result.response.text() };
+        const result = await this.groq.chat.completions.create({
+            model: "llama-3.3-70b-versatile",
+            messages: [
+                { role: "system", content: "You are a productivity and habit coach. Provide a brief, encouraging analysis of the user's habit patterns, what they're doing well, and suggestions for improvement. Keep it to 2-3 paragraphs." },
+                { role: "user", content: `Active Tasks: ${JSON.stringify(activeTasks)}\nCompleted Tasks: ${JSON.stringify(completedTasks)}` },
+            ],
+            temperature: 0.7,
+        });
+        return { analysis: result.choices[0]?.message?.content ?? "" };
     }
 
     async generateWorkout(prompt: string): Promise<GeneratedWorkout> {
-        const fullPrompt = `You are a fitness trainer. Generate a workout plan based on this request: "${prompt}"
-
-Respond in this exact JSON format:
+        const systemPrompt = `You are a fitness trainer. Generate a workout plan based on the user's request. Respond ONLY with valid JSON in this exact format:
 {
   "workout_name": "Name of the workout",
   "exercises": [
@@ -137,20 +141,14 @@ Respond in this exact JSON format:
     }
   ]
 }
+Generate 4-8 exercises.`;
 
-Generate 4-8 exercises. Only return valid JSON, no markdown or extra text.`;
-
-        const model = this.genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-        const result = await model.generateContent(fullPrompt);
-        const text = result.response.text();
-
+        const text = await this.chatCompletion(systemPrompt, prompt);
         return this.parseJSON<GeneratedWorkout>(text);
     }
 
     async generateHabits(prompt: string): Promise<GeneratedHabits> {
-        const fullPrompt = `You are a wellness coach. Generate healthy habits based on this request: "${prompt}"
-
-Respond in this exact JSON format:
+        const systemPrompt = `You are a wellness coach. Generate healthy habits based on the user's request. Respond ONLY with valid JSON in this exact format:
 {
   "habits": [
     {
@@ -160,20 +158,29 @@ Respond in this exact JSON format:
     }
   ]
 }
+Generate 3-5 habits. frequency must be "daily" or "weekly".`;
 
-Generate 3-5 habits. frequency must be "daily" or "weekly". Only return valid JSON, no markdown or extra text.`;
-
-        const model = this.genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-        const result = await model.generateContent(fullPrompt);
-        const text = result.response.text();
-
+        const text = await this.chatCompletion(systemPrompt, prompt);
         return this.parseJSON<GeneratedHabits>(text);
     }
 
-    async processVoiceLog(base64Audio: string, mimeType: string): Promise<ParsedVoiceLog> {
-        const prompt = `You are a fitness assistant. Listen to this audio of someone describing their workout and extract the exercises.
+    async processVoiceLog(audioFilePath: string, mimeType: string): Promise<ParsedVoiceLog> {
+        // Step 1: Transcribe audio using Groq Whisper
+        const transcription = await this.groq.audio.transcriptions.create({
+            file: fs.createReadStream(audioFilePath),
+            model: "whisper-large-v3-turbo",
+            language: "en",
+            response_format: "text",
+        });
 
-Return the data in this exact JSON format:
+        const transcript = typeof transcription === "string" ? transcription : transcription.text;
+
+        if (!transcript || transcript.trim().length === 0) {
+            throw AppError.badRequest("Could not transcribe audio. Please speak clearly and try again.");
+        }
+
+        // Step 2: Parse the transcript into structured workout data using chat
+        const systemPrompt = `You are a fitness assistant. Parse the user's spoken workout description into structured data. Respond ONLY with valid JSON in this exact format:
 {
   "workouts": [
     {
@@ -185,26 +192,13 @@ Return the data in this exact JSON format:
     }
   ]
 }
+Extract all exercises mentioned. If weight is not mentioned, use 0. If unit is not mentioned, default to "kg".`;
 
-Only return valid JSON, no markdown or extra text.`;
-
-        const model = this.genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-        const result = await model.generateContent([
-            prompt,
-            {
-                inlineData: {
-                    data: base64Audio,
-                    mimeType,
-                },
-            },
-        ]);
-        const text = result.response.text();
-
+        const text = await this.chatCompletion(systemPrompt, `Transcribed workout description: "${transcript}"`);
         return this.parseJSON<ParsedVoiceLog>(text);
     }
 
     async detectPlateauForLibrary(userId: string, libraryId: string): Promise<PlateauResult> {
-        // 1. Get all section instances linked to this library template
         const sectionInstances = await this.sectionRepo.findByLibraryId(libraryId);
 
         if (sectionInstances.length === 0) {
@@ -216,7 +210,6 @@ Only return valid JSON, no markdown or extra text.`;
             };
         }
 
-        // 2. Gather all workouts from those section instances
         const allWorkouts: Array<{ exercise_type: string; sets: number; reps: number; weight: number; unit: string; date: string }> = [];
         for (const section of sectionInstances) {
             const workouts = await this.workoutRepo.findBySectionId(section.id);
@@ -232,10 +225,7 @@ Only return valid JSON, no markdown or extra text.`;
             }
         }
 
-        // Sort by date ascending for trend analysis
         allWorkouts.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-        // 3. Call AI analysis
         return this.detectPlateau(allWorkouts);
     }
 
@@ -249,42 +239,27 @@ Only return valid JSON, no markdown or extra text.`;
             };
         }
 
-        const prompt = `You are an expert strength coach analyzing workout history for plateaus and stagnation.
-
-Workout History (ordered by date):
-${JSON.stringify(workouts, null, 2)}
-
-Analyze each exercise for:
-1. Whether weight/volume has stalled (plateau)
-2. Whether performance is declining
-3. Progressive overload trends
-
-Respond in this exact JSON format:
+        const systemPrompt = `You are an expert strength coach analyzing workout history for plateaus and stagnation. Analyze each exercise for whether weight/volume has stalled, whether performance is declining, and progressive overload trends. Respond ONLY with valid JSON in this exact format:
 {
   "plateauDetected": true,
   "summary": "Brief 1-2 sentence overall assessment",
   "exercises": [
     {
       "name": "Exercise Name",
-      "status": "plateau" | "progressing" | "declining",
+      "status": "plateau",
       "insight": "Brief insight about this exercise's trend",
       "suggestion": "Specific actionable suggestion"
     }
   ],
   "recommendations": ["recommendation 1", "recommendation 2", "recommendation 3"]
 }
+The status field must be one of: "plateau", "progressing", or "declining".`;
 
-Only return valid JSON, no markdown or extra text.`;
-
-        const model = this.genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-        const result = await model.generateContent(prompt);
-        const text = result.response.text();
-
+        const text = await this.chatCompletion(systemPrompt, `Workout History (ordered by date):\n${JSON.stringify(workouts, null, 2)}`);
         return this.parseJSON<PlateauResult>(text);
     }
 
     private parseJSON<T>(text: string): T {
-        // Strip markdown code fences if present
         const cleaned = text.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
         try {
             return JSON.parse(cleaned) as T;
