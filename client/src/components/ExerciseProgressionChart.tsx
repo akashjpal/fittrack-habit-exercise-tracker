@@ -113,7 +113,7 @@ export default function ExerciseProgressionChart({
                                         border: '1px solid hsl(var(--border))',
                                         borderRadius: '8px',
                                     }}
-                                    labelFormatter={(label, payload) => {
+                                    labelFormatter={(label: any, payload: any[]) => {
                                         if (payload && payload[0]) {
                                             return payload[0].payload.fullDate;
                                         }
@@ -158,7 +158,7 @@ export default function ExerciseProgressionChart({
                                         border: '1px solid hsl(var(--border))',
                                         borderRadius: '8px',
                                     }}
-                                    labelFormatter={(label, payload) => {
+                                    labelFormatter={(label: any, payload: any[]) => {
                                         if (payload && payload[0]) {
                                             return payload[0].payload.fullDate;
                                         }
