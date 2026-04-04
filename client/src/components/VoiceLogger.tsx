@@ -13,6 +13,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { apiRequest } from "@/lib/queryClient";
+import { getStoredAccessToken } from "@/lib/tokenStore";
 import type { ExerciseSection } from "@/shared/schema";
 import { startOfWeek, endOfWeek } from "date-fns";
 
@@ -108,8 +109,7 @@ export default function VoiceLogger({ weekStart, weekEnd }: VoiceLoggerProps) {
 
         try {
             const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
-            const sessionDataStr = localStorage.getItem("fittrack_session");
-            const token = sessionDataStr ? JSON.parse(sessionDataStr).token : null;
+            const token = getStoredAccessToken();
 
             const response = await fetch(`${baseUrl}/api/ai/voice-log`, {
                 method: "POST",
@@ -120,7 +120,7 @@ export default function VoiceLogger({ weekStart, weekEnd }: VoiceLoggerProps) {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.error || "Failed to process voice log");
+                throw new Error(errorData.error?.message || errorData.message || "Failed to process voice log");
             }
 
             const data = await response.json();

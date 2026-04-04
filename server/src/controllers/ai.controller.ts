@@ -61,9 +61,24 @@ export class AIController {
                 throw AppError.badRequest("Audio file is required");
             }
 
+            // Multer populates req.body string fields from the multipart form
+            // caseTransformMiddleware runs before multer, so these arrive in their original camelCase
+            const sectionId = req.body.sectionId || req.body.section_id;
+            const date = req.body.date;
+
+            if (!sectionId) {
+                throw AppError.badRequest("sectionId is required");
+            }
+
             const mimeType = file.mimetype || "audio/webm";
 
-            const result = await this.aiService.processVoiceLog(file.path, mimeType);
+            const result = await this.aiService.processVoiceLog(
+                file.path,
+                mimeType,
+                req.userId,
+                sectionId,
+                date || new Date().toISOString(),
+            );
 
             // Cleanup uploaded file
             fs.unlinkSync(file.path);
