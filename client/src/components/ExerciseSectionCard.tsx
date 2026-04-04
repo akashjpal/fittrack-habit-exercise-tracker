@@ -1,7 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Checkbox } from "@/components/ui/checkbox";
 import { ChevronDown, Dumbbell, Trash2, CheckCircle2, Circle } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
@@ -39,89 +37,109 @@ export default function ExerciseSectionCard({
 }: ExerciseSectionCardProps) {
   const [isOpen, setIsOpen] = useState(false);
   const completedSets = workouts.reduce((sum, w) => (w.completed !== false ? sum + w.sets : sum), 0);
+  const progress = Math.min(completedSets / targetSets, 1);
+  const isComplete = completedSets >= targetSets;
 
   return (
-    <Card data-testid={`card-exercise-section-${sectionName.toLowerCase()}`}>
-      <CardHeader className="pb-4">
-        <div className="flex items-center justify-between gap-4">
-          <CardTitle className="text-xl font-semibold flex items-center gap-2">
-            <Dumbbell className="h-5 w-5 text-primary" />
-            {sectionName}
-          </CardTitle>
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="font-display">
+    <Card
+      data-testid={`card-exercise-section-${sectionName.toLowerCase()}`}
+      className="overflow-hidden"
+    >
+      <CardContent className="p-4 space-y-3">
+        {/* Header row */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <Dumbbell className="h-4 w-4 text-primary shrink-0" />
+            <span className="font-semibold text-sm truncate">{sectionName}</span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <span
+              className={`text-xs font-medium tabular-nums ${isComplete ? "text-primary" : "text-muted-foreground"
+                }`}
+            >
               {completedSets}/{targetSets} sets
-            </Badge>
+            </span>
             {onDeleteSection && (
               <button
                 onClick={onDeleteSection}
-                className="p-1 text-muted-foreground hover:text-destructive transition-colors"
+                className="p-0.5 text-muted-foreground hover:text-destructive transition-colors"
                 aria-label="Delete section"
                 data-testid={`button-delete-section-${sectionName.toLowerCase()}`}
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-3.5 w-3.5" />
               </button>
             )}
           </div>
         </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
+
+        {/* Progress bar */}
+        <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all duration-500 ${isComplete ? "bg-primary" : "bg-primary/60"
+              }`}
+            style={{ width: `${progress * 100}%` }}
+          />
+        </div>
+
+        {/* Log workout */}
         <WorkoutEntryDialog sectionName={sectionName} onSave={onAddWorkout} />
 
+        {/* Workout list */}
         {workouts.length > 0 && (
           <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-            <CollapsibleTrigger className="flex items-center justify-between w-full text-sm font-medium text-muted-foreground hover-elevate p-2 rounded-md" data-testid={`button-toggle-workouts-${sectionName.toLowerCase()}`}>
-              <span>Recent Workouts ({workouts.length})</span>
-              <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+            <CollapsibleTrigger
+              className="flex items-center justify-between w-full text-xs text-muted-foreground hover:text-foreground transition-colors px-1 pt-0.5"
+              data-testid={`button-toggle-workouts-${sectionName.toLowerCase()}`}
+            >
+              <span>{workouts.length} workout{workouts.length !== 1 ? "s" : ""}</span>
+              <ChevronDown
+                className={`h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-180" : ""}`}
+              />
             </CollapsibleTrigger>
-            <CollapsibleContent className="mt-2 space-y-2">
+            <CollapsibleContent className="mt-2 space-y-1.5">
               {workouts.map((workout) => (
                 <div
                   key={workout.id}
-                  className="p-3 rounded-md bg-muted/50 space-y-1 group"
+                  className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-muted/40 group"
                   data-testid={`workout-entry-${workout.id}`}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3 flex-1">
-                      {onToggleWorkout && (
-                        <button
-                          onClick={() => onToggleWorkout(workout.id, !(workout.completed ?? true))}
-                          className={`flex-shrink-0 transition-colors ${workout.completed !== false ? "text-primary" : "text-muted-foreground hover:text-primary"
-                            }`}
-                        >
-                          {workout.completed !== false ? (
-                            <CheckCircle2 className="h-5 w-5" />
-                          ) : (
-                            <Circle className="h-5 w-5" />
-                          )}
-                        </button>
+                  {onToggleWorkout && (
+                    <button
+                      onClick={() => onToggleWorkout(workout.id, !(workout.completed ?? true))}
+                      className={`shrink-0 transition-colors ${workout.completed !== false
+                          ? "text-primary"
+                          : "text-muted-foreground hover:text-primary"
+                        }`}
+                    >
+                      {workout.completed !== false ? (
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                      ) : (
+                        <Circle className="h-3.5 w-3.5" />
                       )}
-                      <div className={`flex-1 ${workout.completed === false ? "opacity-60" : ""}`}>
-                        <div className="flex items-center justify-between">
-                          <span className={`font-medium text-sm ${workout.completed === false ? "italic" : ""}`}>
-                            {workout.exerciseType} {workout.completed === false && "(Planned)"}
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-muted-foreground">
-                              {format(workout.date, 'MMM d, yyyy')}
-                            </span>
-                            {onDeleteWorkout && (
-                              <button
-                                onClick={() => onDeleteWorkout(workout.id)}
-                                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-destructive hover:text-destructive-foreground rounded"
-                                aria-label="Delete workout"
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {workout.sets ?? 0} sets × {workout.reps ?? 0} reps @ {workout.weight ?? 0} {workout.unit || 'kg'}
-                      </p>
-                    </div>
-                  </div>
+                    </button>
+                  )}
+                  <span
+                    className={`flex-1 text-xs font-medium truncate ${workout.completed === false ? "opacity-60 italic" : ""
+                      }`}
+                  >
+                    {workout.exerciseType}
+                    {workout.completed === false && " (Planned)"}
+                  </span>
+                  <span className="text-xs text-muted-foreground shrink-0">
+                    {workout.sets}×{workout.reps} @ {workout.weight} {workout.unit || "kg"}
+                  </span>
+                  <span className="text-xs text-muted-foreground/60 shrink-0 hidden sm:block">
+                    {format(workout.date, "MMM d")}
+                  </span>
+                  {onDeleteWorkout && (
+                    <button
+                      onClick={() => onDeleteWorkout(workout.id)}
+                      className="opacity-0 group-hover:opacity-100 shrink-0 transition-opacity hover:text-destructive"
+                      aria-label="Delete workout"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  )}
                 </div>
               ))}
             </CollapsibleContent>
