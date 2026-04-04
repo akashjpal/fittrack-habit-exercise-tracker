@@ -36,7 +36,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { data } = await insforge.auth.getCurrentUser();
         if (data?.user) {
           const u = data.user;
-          setUser({ id: u.id, email: u.email, name: u.profile?.name });
+          if (u) {
+            setUser({ id: u.id, email: u.email, name: u.profile?.name });
+          }
           // Recover the access token for API calls (after OAuth or page reload)
           const { data: refreshed } = await insforge.auth.refreshSession();
           if (refreshed?.accessToken) setAccessToken(refreshed.accessToken);
@@ -66,8 +68,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       toast({ title: "Login failed", description: error.message, variant: "destructive" });
       throw error;
     }
-    setUser({ id: data.user.id, email: data.user.email, name: data.user.profile?.name });
-    setAccessToken(data.accessToken);
+    if (data?.user) {
+      setUser({ id: data.user.id, email: data.user.email, name: data.user.profile?.name });
+      setAccessToken((data as any).session?.access_token || data.accessToken || null);
+    }
     toast({ title: "Welcome back!", description: "Logged in successfully." });
     setLocation("/dashboard");
   }, [setLocation, toast]);
@@ -98,8 +102,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       toast({ title: "Verification failed", description: error.message, variant: "destructive" });
       throw error;
     }
-    setUser({ id: data.user.id, email: data.user.email, name: data.user.profile?.name });
-    setAccessToken(data.accessToken);
+    if (data?.user) {
+      setUser({ id: data.user.id, email: data.user.email, name: data.user.profile?.name });
+      setAccessToken((data as any).session?.access_token || data.accessToken || null);
+    }
     toast({ title: "Welcome!", description: "Account verified successfully." });
     setLocation("/dashboard");
   }, [setLocation, toast]);

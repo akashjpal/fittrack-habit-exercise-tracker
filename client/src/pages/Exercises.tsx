@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import ExerciseSectionCard from "@/components/ExerciseSectionCard";
@@ -21,8 +21,18 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
+interface BatchEntry {
+  existing: number;
+  target: number;
+  adding: number;
+  sectionName: string;
+  fired: boolean;
+}
+
 export default function Exercises() {
   const { toast } = useToast();
+  // Tracks sets being added in a single synchronous batch (one dialog save = N onSave calls)
+  const pendingBatch = useRef<Map<string, BatchEntry>>(new Map());
 
   // Week range state (resets to current week on refresh)
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 0 }));
@@ -210,14 +220,14 @@ export default function Exercises() {
 
   if (sectionsLoading || workoutsLoading) {
     return (
-      <div className="space-y-8" data-testid="page-exercises">
-        <div className="flex items-center justify-between flex-wrap gap-4">
+      <div className="space-y-5" data-testid="page-exercises">
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
-            <h1 className="text-4xl font-bold mb-2">Exercise Sections</h1>
-            <p className="text-muted-foreground">Log your workouts and track volume by muscle group</p>
+            <h1 className="text-3xl font-bold mb-1">Exercise Sections</h1>
+            <p className="text-sm text-muted-foreground">Log workouts and track volume by muscle group</p>
           </div>
         </div>
-        <div className="text-muted-foreground">Loading...</div>
+        <div className="text-muted-foreground text-sm">Loading...</div>
       </div>
     );
   }
@@ -243,18 +253,33 @@ export default function Exercises() {
     return hasWorkouts || createdThisWeek;
   });
 
-
+  // Determine features unlocked by milestone
+  // Once the user has added at least one manual workout in *any* section this week, unlock voice logging
+  const hasLoggedAnyWorkout = displayedSections.some(s => s.workouts.length > 0);
 
   return (
-    <div className="space-y-8" data-testid="page-exercises">
-      <div className="flex items-center justify-between flex-wrap gap-4">
+    <div className="space-y-5" data-testid="page-exercises">
+      {/* Header */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-4xl font-bold mb-2">Exercise Sections</h1>
-          <p className="text-muted-foreground">Log your workouts and track volume by muscle group</p>
+          <h1 className="text-3xl font-bold mb-1">Exercise Sections</h1>
+          <p className="text-sm text-muted-foreground">Log workouts and track volume by muscle group</p>
         </div>
-        <AddSectionDialog
-          onAdd={(section) => addSectionMutation.mutate(section)}
-        />
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Switch
+              id="show-empty"
+              checked={showEmptySections}
+              onCheckedChange={setShowEmptySections}
+            />
+            <Label htmlFor="show-empty" className="text-sm text-muted-foreground">
+              Show hidden
+            </Label>
+          </div>
+          <AddSectionDialog
+            onAdd={(section) => addSectionMutation.mutate(section)}
+          />
+        </div>
       </div>
 
       <WeekRangeSelector
@@ -263,57 +288,102 @@ export default function Exercises() {
         onRangeChange={handleRangeChange}
       />
 
-      <div className="flex items-center space-x-2">
-        <Switch
-          id="show-empty"
-          checked={showEmptySections}
-          onCheckedChange={setShowEmptySections}
-        />
-        <Label htmlFor="show-empty" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-          Show hidden sections
-        </Label>
+      {/* Two-panel layout: sidebar + sections */}
+      <div className="flex flex-col lg:flex-row lg:items-start gap-6">
+        {/* Voice Logger — above sections on mobile, right sidebar on desktop */}
+        <div className="w-full lg:w-72 lg:order-2 lg:shrink-0 lg:sticky lg:top-24">
+          {hasLoggedAnyWorkout ? (
+            <VoiceLogger weekStart={weekStart} weekEnd={weekEnd} />
+          ) : (
+            <div className="bg-primary/5 border border-primary/20 rounded-lg p-5 flex flex-col items-center text-center gap-2">
+              <span className="text-2xl">🎙️</span>
+              <h3 className="font-semibold text-sm">Unlock Voice Logging</h3>
+              <p className="text-muted-foreground text-xs">
+                Log your first workout this week to unlock AI hands-free voice logging.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Sections grid */}
+        <div className="lg:order-1 flex-1 min-w-0">
+          {displayedSections.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground mb-2">No active exercise sections for this week.</p>
+              <p className="text-xs text-muted-foreground">Toggle "Show hidden" to see older sections.</p>
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {displayedSections.map((section) => (
+                <ExerciseSectionCard
+                  key={section.id}
+                  sectionName={section.name}
+                  targetSets={section.targetSets ?? 10}
+                  workouts={section.workouts}
+                  onAddWorkout={(workout) => {
+                    const targetSets = section.targetSets ?? 10;
+
+                    // Accumulate sets from this synchronous batch (dialog fires onSave once per set entry)
+                    if (!pendingBatch.current.has(section.id)) {
+                      const existingCompleted = section.workouts.reduce(
+                        (sum, w) => (w.completed !== false ? sum + w.sets : sum), 0
+                      );
+                      pendingBatch.current.set(section.id, {
+                        existing: existingCompleted,
+                        target: targetSets,
+                        adding: 0,
+                        sectionName: section.name,
+                        fired: false,
+                      });
+                    }
+
+                    const batch = pendingBatch.current.get(section.id)!;
+                    batch.adding += workout.completed !== false ? workout.sets : 0;
+
+                    // Check milestone after the synchronous loop finishes (all onSave calls complete)
+                    setTimeout(() => {
+                      if (
+                        !batch.fired &&
+                        batch.existing < batch.target &&
+                        batch.existing + batch.adding >= batch.target
+                      ) {
+                        batch.fired = true;
+                        import("canvas-confetti").then((confetti) => {
+                          confetti.default({
+                            particleCount: 180,
+                            spread: 90,
+                            origin: { y: 0.6 },
+                            colors: ["#22c55e", "#10b981", "#166534", "#86efac"],
+                          });
+                        });
+                        toast({
+                          title: "🎉 Target Reached!",
+                          description: `Awesome! You hit your ${batch.target} sets target for ${batch.sectionName}!`,
+                        });
+                      }
+                      pendingBatch.current.delete(section.id);
+                    }, 0);
+
+                    // Use the date from the workout dialog (user-selected)
+                    const workoutDate = workout.date
+                      ? new Date(workout.date + 'T12:00:00')
+                      : new Date();
+
+                    addWorkoutMutation.mutate({
+                      ...workout,
+                      sectionId: section.id,
+                      date: workoutDate.toISOString(),
+                    });
+                  }}
+                  onDeleteWorkout={(workoutId) => deleteWorkoutMutation.mutate(workoutId)}
+                  onToggleWorkout={(workoutId, completed) => toggleWorkoutStatusMutation.mutate({ id: workoutId, completed })}
+                  onDeleteSection={() => setSectionToDelete(section.id)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
-
-      <VoiceLogger weekStart={weekStart} weekEnd={weekEnd} />
-
-      {displayedSections.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground mb-4">No active exercise sections for this week.</p>
-          <p className="text-sm text-muted-foreground">Toggle "Show hidden sections" to see older sections.</p>
-        </div>
-      ) : (
-        <div className="grid gap-6 md:grid-cols-2">
-          {displayedSections.map((section) => (
-            <ExerciseSectionCard
-              key={section.id}
-              sectionName={section.name}
-              targetSets={section.targetSets ?? 10}
-              workouts={section.workouts}
-              onAddWorkout={(workout) => {
-                // Use the date from the workout dialog (user-selected)
-                // Fallback to current date if not provided
-                const workoutDate = workout.date
-                  ? new Date(workout.date + 'T12:00:00') // Add time to avoid timezone issues
-                  : new Date();
-
-                console.log("Adding workout:", {
-                  userSelectedDate: workout.date,
-                  workoutDate: workoutDate.toISOString()
-                });
-
-                addWorkoutMutation.mutate({
-                  ...workout,
-                  sectionId: section.id,
-                  date: workoutDate.toISOString(),
-                });
-              }}
-              onDeleteWorkout={(workoutId) => deleteWorkoutMutation.mutate(workoutId)}
-              onToggleWorkout={(workoutId, completed) => toggleWorkoutStatusMutation.mutate({ id: workoutId, completed })}
-              onDeleteSection={() => setSectionToDelete(section.id)}
-            />
-          ))}
-        </div>
-      )}
 
       <AlertDialog open={!!sectionToDelete} onOpenChange={(open) => !open && setSectionToDelete(null)}>
         <AlertDialogContent>
