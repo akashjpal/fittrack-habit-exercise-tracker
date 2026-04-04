@@ -1,6 +1,7 @@
 import { Router } from "express";
 import multer from "multer";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
 import type { AIController } from "../controllers/ai.controller";
 import { authMiddleware } from "../middleware/auth.middleware";
@@ -8,8 +9,23 @@ import { authMiddleware } from "../middleware/auth.middleware";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const uploadDir = path.resolve(__dirname, "../../uploads");
 
+// Ensure upload directory exists
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Use diskStorage to preserve the file extension — Groq Whisper needs it to identify audio format
+const storage = multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, uploadDir),
+    filename: (_req, file, cb) => {
+        const ext = path.extname(file.originalname) || ".webm";
+        const unique = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        cb(null, `${unique}${ext}`);
+    },
+});
+
 const upload = multer({
-    dest: uploadDir,
+    storage,
     limits: { fileSize: 25 * 1024 * 1024 }, // 25MB
     fileFilter: (_req, file, cb) => {
         if (file.mimetype.startsWith("audio/")) {
