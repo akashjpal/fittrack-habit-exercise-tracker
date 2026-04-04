@@ -164,7 +164,13 @@ Generate 3-5 habits. frequency must be "daily" or "weekly".`;
         return this.parseJSON<GeneratedHabits>(text);
     }
 
-    async processVoiceLog(audioFilePath: string, mimeType: string): Promise<ParsedVoiceLog> {
+    async processVoiceLog(
+        audioFilePath: string,
+        mimeType: string,
+        userId: string,
+        sectionId: string,
+        date: string,
+    ): Promise<{ workouts: import("../shared/index").WorkoutRow[] }> {
         // Step 1: Transcribe audio using Groq Whisper
         const transcription = await this.groq.audio.transcriptions.create({
             file: fs.createReadStream(audioFilePath),
@@ -195,7 +201,25 @@ Generate 3-5 habits. frequency must be "daily" or "weekly".`;
 Extract all exercises mentioned. If weight is not mentioned, use 0. If unit is not mentioned, default to "kg".`;
 
         const text = await this.chatCompletion(systemPrompt, `Transcribed workout description: "${transcript}"`);
-        return this.parseJSON<ParsedVoiceLog>(text);
+        const parsed = this.parseJSON<ParsedVoiceLog>(text);
+
+        if (!parsed.workouts || parsed.workouts.length === 0) {
+            throw AppError.badRequest("No exercises detected in your recording. Please describe your workout clearly.");
+        }
+
+        // Step 3: Persist each workout to the database
+        const workoutsToCreate = parsed.workouts.map((w) => ({
+            exercise_type: w.exercise_type,
+            sets: w.sets,
+            reps: w.reps,
+            weight: w.weight,
+            unit: w.unit || "kg",
+            completed: true as const,
+            date,
+        }));
+
+        const savedWorkouts = await this.workoutRepo.createBatch(userId, sectionId, workoutsToCreate);
+        return { workouts: savedWorkouts };
     }
 
     async detectPlateauForLibrary(userId: string, libraryId: string): Promise<PlateauResult> {
