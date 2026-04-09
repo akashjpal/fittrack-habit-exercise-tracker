@@ -90,6 +90,31 @@ export class AIService {
             this.habitRepo.findAllCompletions(userId),
         ]);
 
+        // Keep only the fields the AI needs to avoid exceeding token limits
+        const recentWorkouts = workouts.slice(0, 15).map((w) => ({
+            exercise: w.exercise_type,
+            sets: w.sets,
+            reps: w.reps,
+            weight: w.weight,
+            unit: w.unit,
+            date: w.date,
+        }));
+
+        const sectionSummary = sections.slice(0, 10).map((s) => ({
+            name: s.name,
+            date: s.date,
+        }));
+
+        const habitSummary = habits.slice(0, 10).map((h) => ({
+            name: h.name,
+            frequency: h.frequency,
+        }));
+
+        const recentCompletions = completions.slice(0, 15).map((c) => ({
+            habit_id: c.habit_id,
+            date: c.date,
+        }));
+
         const systemPrompt = `You are a fitness coach AI. Analyze the user's workout and habit data and provide personalized feedback. Respond ONLY with valid JSON in this exact format:
 {
   "motivation": "A brief motivational message",
@@ -98,17 +123,17 @@ export class AIService {
   "solutions": ["solution 1", "solution 2", "solution 3"]
 }`;
 
-        const userPrompt = `Workout Data:
-${JSON.stringify(workouts.slice(0, 50), null, 2)}
+        const userPrompt = `Recent Workouts (last 15):
+${JSON.stringify(recentWorkouts)}
 
-Sections:
-${JSON.stringify(sections, null, 2)}
+Workout Sessions:
+${JSON.stringify(sectionSummary)}
 
 Habits:
-${JSON.stringify(habits, null, 2)}
+${JSON.stringify(habitSummary)}
 
-Habit Completions (recent):
-${JSON.stringify(completions.slice(0, 50), null, 2)}`;
+Recent Habit Completions (last 15):
+${JSON.stringify(recentCompletions)}`;
 
         const text = await this.chatCompletion(systemPrompt, userPrompt);
         return this.parseJSON<FitCheckResult>(text);
@@ -279,7 +304,7 @@ Extract all exercises mentioned. If weight is not mentioned, use 0. If unit is n
 }
 The status field must be one of: "plateau", "progressing", or "declining".`;
 
-        const text = await this.chatCompletion(systemPrompt, `Workout History (ordered by date):\n${JSON.stringify(workouts, null, 2)}`);
+        const text = await this.chatCompletion(systemPrompt, `Workout History (ordered by date):\n${JSON.stringify(workouts.slice(0, 30))}`);
         return this.parseJSON<PlateauResult>(text);
     }
 
