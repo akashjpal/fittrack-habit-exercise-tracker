@@ -1,9 +1,7 @@
 import dotenv from "dotenv";
-import path from "path";
-import { fileURLToPath } from "url";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.resolve(__dirname, "../../.env") });
+// Reads .env from the repo/process root (server/ when run standalone)
+dotenv.config();
 
 function required(key: string): string {
     const value = process.env[key];
