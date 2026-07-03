@@ -90,7 +90,44 @@ export class AIService {
             this.habitRepo.findAllCompletions(userId),
         ]);
 
-        const systemPrompt = `You are a fitness coach AI. Analyze the user's workout and habit data and provide personalized feedback. Respond ONLY with valid JSON in this exact format:
+        // Filter to the last 3 weeks
+        const threeWeeksAgo = new Date();
+        threeWeeksAgo.setDate(threeWeeksAgo.getDate() - 90);
+        const cutoff = threeWeeksAgo.toISOString().slice(0, 10); // "YYYY-MM-DD"
+
+        const recentWorkouts = workouts
+            .filter((w) => w.date >= cutoff)
+            .slice(0, 40)
+            .map((w) => ({
+                exercise: w.exercise_type,
+                sets: w.sets,
+                reps: w.reps,
+                weight: w.weight,
+                unit: w.unit,
+                date: w.date,
+            }));
+
+        const recentSections = sections
+            .filter((s) => s.date >= cutoff)
+            .slice(0, 20)
+            .map((s) => ({ name: s.name, date: s.date }));
+
+        const habitSummary = habits.slice(0, 10).map((h) => ({
+            name: h.name,
+            frequency: h.frequency,
+        }));
+
+        // Build a habit name lookup so completions are human-readable for the AI
+        const habitNameById = new Map(habits.map((h) => [h.id, h.name]));
+        const recentCompletions = completions
+            .filter((c) => c.date >= cutoff)
+            .slice(0, 40)
+            .map((c) => ({
+                habit: habitNameById.get(c.habit_id) ?? c.habit_id,
+                date: c.date,
+            }));
+
+        const systemPrompt = `You are a fitness coach AI. Analyze the user's workout and habit data from the last 3 weeks and provide personalized feedback. Respond ONLY with valid JSON in this exact format:
 {
   "motivation": "A brief motivational message",
   "strengths": ["strength 1", "strength 2", "strength 3"],
@@ -98,17 +135,19 @@ export class AIService {
   "solutions": ["solution 1", "solution 2", "solution 3"]
 }`;
 
-        const userPrompt = `Workout Data:
-${JSON.stringify(workouts.slice(0, 50), null, 2)}
+        const userPrompt = `Analysis window: last 3 months (since ${cutoff})
 
-Sections:
-${JSON.stringify(sections, null, 2)}
+Workouts logged (${recentWorkouts.length}):
+${JSON.stringify(recentWorkouts)}
 
-Habits:
-${JSON.stringify(habits, null, 2)}
+Workout sessions:
+${JSON.stringify(recentSections)}
 
-Habit Completions (recent):
-${JSON.stringify(completions.slice(0, 50), null, 2)}`;
+Habits being tracked:
+${JSON.stringify(habitSummary)}
+
+Habit completions (${recentCompletions.length}):
+${JSON.stringify(recentCompletions)}`;
 
         const text = await this.chatCompletion(systemPrompt, userPrompt);
         return this.parseJSON<FitCheckResult>(text);
@@ -279,7 +318,7 @@ Extract all exercises mentioned. If weight is not mentioned, use 0. If unit is n
 }
 The status field must be one of: "plateau", "progressing", or "declining".`;
 
-        const text = await this.chatCompletion(systemPrompt, `Workout History (ordered by date):\n${JSON.stringify(workouts, null, 2)}`);
+        const text = await this.chatCompletion(systemPrompt, `Workout History (ordered by date):\n${JSON.stringify(workouts.slice(0, 30))}`);
         return this.parseJSON<PlateauResult>(text);
     }
 

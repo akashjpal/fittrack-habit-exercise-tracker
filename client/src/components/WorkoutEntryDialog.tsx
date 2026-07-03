@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Minus, Calendar, X } from "lucide-react";
 
 interface SetEntry {
-  reps: number;
+  reps: string;
 }
 
 interface WorkoutEntryDialogProps {
@@ -31,30 +31,31 @@ const getTodayDate = () => {
 export default function WorkoutEntryDialog({ sectionName, onSave }: WorkoutEntryDialogProps) {
   const [open, setOpen] = useState(false);
   const [exerciseType, setExerciseType] = useState("");
-  const [setEntries, setSetEntries] = useState<SetEntry[]>([{ reps: 10 }]);
+  const [setEntries, setSetEntries] = useState<SetEntry[]>([{ reps: "10" }]);
   const [weight, setWeight] = useState(20);
   const [unit, setUnit] = useState("kg");
   const [workoutDate, setWorkoutDate] = useState(getTodayDate());
 
   const addSetEntry = () => {
-    setSetEntries((prev) => [...prev, { reps: prev[prev.length - 1]?.reps ?? 10 }]);
+    setSetEntries((prev) => [...prev, { reps: prev[prev.length - 1]?.reps || "10" }]);
   };
 
   const removeSetEntry = (index: number) => {
     setSetEntries((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const updateSetReps = (index: number, reps: number) => {
+  const updateSetReps = (index: number, reps: string) => {
     setSetEntries((prev) => prev.map((entry, i) => (i === index ? { ...entry, reps } : entry)));
   };
 
   const handleSave = () => {
     for (const entry of setEntries) {
-      onSave?.({ exerciseType, sets: 1, reps: entry.reps, weight, unit, date: workoutDate });
+      const reps = parseInt(entry.reps) || 0;
+      onSave?.({ exerciseType, sets: 1, reps, weight, unit, date: workoutDate });
     }
     setOpen(false);
     setExerciseType("");
-    setSetEntries([{ reps: 10 }]);
+    setSetEntries([{ reps: "10" }]);
     setWeight(20);
     setWorkoutDate(getTodayDate());
   };
@@ -114,15 +115,15 @@ export default function WorkoutEntryDialog({ sectionName, onSave }: WorkoutEntry
                     size="icon"
                     variant="outline"
                     className="h-8 w-8"
-                    onClick={() => updateSetReps(index, Math.max(1, entry.reps - 1))}
+                    onClick={() => updateSetReps(index, String(Math.max(0, (parseInt(entry.reps) || 0) - 1)))}
                   >
                     <Minus className="h-3 w-3" />
                   </Button>
                   <Input
                     type="number"
-                    min="1"
+                    min="0"
                     value={entry.reps}
-                    onChange={(e) => updateSetReps(index, parseInt(e.target.value) || 1)}
+                    onChange={(e) => updateSetReps(index, e.target.value)}
                     className="text-center h-8 w-16"
                   />
                   <Button
@@ -130,7 +131,7 @@ export default function WorkoutEntryDialog({ sectionName, onSave }: WorkoutEntry
                     size="icon"
                     variant="outline"
                     className="h-8 w-8"
-                    onClick={() => updateSetReps(index, entry.reps + 1)}
+                    onClick={() => updateSetReps(index, String((parseInt(entry.reps) || 0) + 1))}
                   >
                     <Plus className="h-3 w-3" />
                   </Button>
