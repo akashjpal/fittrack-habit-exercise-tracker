@@ -1,0 +1,1 @@
+<!-- Moved to .github/copilot-instructions.md — this file is intentionally empty to avoid duplication. -->
