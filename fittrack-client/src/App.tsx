@@ -14,7 +14,6 @@ import Landing from "@/pages/Landing";
 import Login from "@/pages/auth/Login";
 import Signup from "@/pages/auth/Signup";
 import ThemeToggle from "@/components/ThemeToggle";
-import MaintenanceBanner from "@/components/MaintenanceBanner";
 import { LayoutDashboard, Dumbbell, TrendingUp, Brain, Loader2, Library, Clock } from "lucide-react";
 import { AuthProvider, useAuth } from "./lib/auth";
 
@@ -161,7 +160,6 @@ function App() {
       <AuthProvider>
         <TooltipProvider>
           <div className="min-h-screen bg-background">
-            <MaintenanceBanner />
             <Navigation />
             <MainLayout />
           </div>
