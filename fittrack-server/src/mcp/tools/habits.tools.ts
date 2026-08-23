@@ -1,7 +1,9 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { habitsApi, completionsApi } from "../api/habits.client.js";
-import { toToolError } from "../utils/errors.js";
-import { createHabitShape, idShape, habitIdShape, completeHabitShape, deleteCompletionShape } from "../schemas/habit.schema.js";
+import type { McpContext, McpServices } from "../server";
+import { toToolError } from "../toolError";
+import { deepCamelToSnake, deepSnakeToCamel } from "../caseTransform";
+import { createHabitSchema, createCompletionSchema } from "../../shared/index";
+import { createHabitShape, idShape, habitIdShape, completeHabitShape, deleteCompletionShape } from "../schemas/habit.schema";
 
 function json(data: unknown) {
     return { content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] };
@@ -11,10 +13,10 @@ function today(): string {
     return new Date().toISOString().split("T")[0];
 }
 
-export function registerHabitTools(server: McpServer) {
+export function registerHabitTools(server: McpServer, ctx: McpContext, services: McpServices) {
     server.registerTool("list_habits", { title: "List habits", description: "List all habits for the current user." }, async () => {
         try {
-            return json(await habitsApi.list());
+            return json(deepSnakeToCamel(await services.habit.getAllHabits(ctx.userId)));
         } catch (err) {
             return toToolError(err);
         }
@@ -29,7 +31,8 @@ export function registerHabitTools(server: McpServer) {
         },
         async (args) => {
             try {
-                return json(await habitsApi.create(args));
+                const dto = createHabitSchema.parse(deepCamelToSnake(args));
+                return json(deepSnakeToCamel(await services.habit.createHabit(ctx.userId, dto)));
             } catch (err) {
                 return toToolError(err);
             }
@@ -41,7 +44,7 @@ export function registerHabitTools(server: McpServer) {
         { title: "Delete habit", description: "Delete a habit by id.", inputSchema: idShape },
         async ({ id }) => {
             try {
-                await habitsApi.remove(id);
+                await services.habit.deleteHabit(id);
                 return json({ deleted: true, id });
             } catch (err) {
                 return toToolError(err);
@@ -54,7 +57,7 @@ export function registerHabitTools(server: McpServer) {
         { title: "List all habit completions", description: "List every habit completion record for the current user." },
         async () => {
             try {
-                return json(await completionsApi.list());
+                return json(deepSnakeToCamel(await services.habit.getAllCompletions(ctx.userId)));
             } catch (err) {
                 return toToolError(err);
             }
@@ -70,7 +73,7 @@ export function registerHabitTools(server: McpServer) {
         },
         async ({ habitId }) => {
             try {
-                return json(await completionsApi.listByHabit(habitId));
+                return json(deepSnakeToCamel(await services.habit.getCompletionsByHabit(habitId)));
             } catch (err) {
                 return toToolError(err);
             }
@@ -88,13 +91,14 @@ export function registerHabitTools(server: McpServer) {
         async ({ habitId, date }) => {
             try {
                 const targetDate = date ?? today();
-                const existing = await completionsApi.listByHabit(habitId);
+                const existing = await services.habit.getCompletionsByHabit(habitId);
                 const alreadyDone = existing.some((c) => c.date.split("T")[0] === targetDate);
                 if (alreadyDone) {
                     return json({ created: false, message: `Already marked complete for ${targetDate}` });
                 }
-                const completion = await completionsApi.create({ habitId, date: targetDate });
-                return json({ created: true, completion });
+                const dto = createCompletionSchema.parse(deepCamelToSnake({ habitId, date: targetDate }));
+                const completion = await services.habit.createCompletion(ctx.userId, dto);
+                return json({ created: true, completion: deepSnakeToCamel(completion) });
             } catch (err) {
                 return toToolError(err);
             }
@@ -110,7 +114,7 @@ export function registerHabitTools(server: McpServer) {
         },
         async ({ habitId, date }) => {
             try {
-                await completionsApi.remove(habitId, date);
+                await services.habit.deleteCompletion(habitId, date);
                 return json({ deleted: true, habitId, date });
             } catch (err) {
                 return toToolError(err);

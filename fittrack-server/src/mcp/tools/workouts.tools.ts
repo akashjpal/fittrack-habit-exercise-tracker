@@ -1,6 +1,8 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { workoutsApi } from "../api/workouts.client.js";
-import { toToolError } from "../utils/errors.js";
+import type { McpContext, McpServices } from "../server";
+import { toToolError } from "../toolError";
+import { deepCamelToSnake, deepSnakeToCamel } from "../caseTransform";
+import { createWorkoutSchema, batchCreateWorkoutSchema } from "../../shared/index";
 import {
     createWorkoutShape,
     createWorkoutBatchShape,
@@ -8,19 +10,19 @@ import {
     idShape,
     sectionIdShape,
     weekRangeShape,
-} from "../schemas/workout.schema.js";
+} from "../schemas/workout.schema";
 
 function json(data: unknown) {
     return { content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] };
 }
 
-export function registerWorkoutTools(server: McpServer) {
+export function registerWorkoutTools(server: McpServer, ctx: McpContext, services: McpServices) {
     server.registerTool(
         "list_workouts",
         { title: "List workouts", description: "List all workouts for the current user." },
         async () => {
             try {
-                return json(await workoutsApi.list());
+                return json(deepSnakeToCamel(await services.workout.getAllWorkouts(ctx.userId)));
             } catch (err) {
                 return toToolError(err);
             }
@@ -36,7 +38,7 @@ export function registerWorkoutTools(server: McpServer) {
         },
         async ({ startDate, endDate }) => {
             try {
-                return json(await workoutsApi.listByWeek(startDate, endDate));
+                return json(deepSnakeToCamel(await services.workout.getWorkoutsByWeek(ctx.userId, startDate, endDate)));
             } catch (err) {
                 return toToolError(err);
             }
@@ -52,7 +54,7 @@ export function registerWorkoutTools(server: McpServer) {
         },
         async ({ sectionId }) => {
             try {
-                return json(await workoutsApi.listBySection(sectionId));
+                return json(deepSnakeToCamel(await services.workout.getWorkoutsBySection(sectionId)));
             } catch (err) {
                 return toToolError(err);
             }
@@ -69,7 +71,8 @@ export function registerWorkoutTools(server: McpServer) {
         },
         async (args) => {
             try {
-                return json(await workoutsApi.create(args));
+                const dto = createWorkoutSchema.parse(deepCamelToSnake(args));
+                return json(deepSnakeToCamel(await services.workout.createWorkout(ctx.userId, dto)));
             } catch (err) {
                 return toToolError(err);
             }
@@ -86,7 +89,10 @@ export function registerWorkoutTools(server: McpServer) {
         },
         async ({ sectionId, workouts }) => {
             try {
-                return json(await workoutsApi.createBatch(sectionId, workouts));
+                const dto = batchCreateWorkoutSchema.parse(deepCamelToSnake({ sectionId, workouts }));
+                return json(
+                    deepSnakeToCamel(await services.workout.createBatchWorkouts(ctx.userId, dto.section_id, dto.workouts)),
+                );
             } catch (err) {
                 return toToolError(err);
             }
@@ -102,7 +108,7 @@ export function registerWorkoutTools(server: McpServer) {
         },
         async ({ id, completed }) => {
             try {
-                return json(await workoutsApi.setStatus(id, completed));
+                return json(deepSnakeToCamel(await services.workout.toggleWorkoutStatus(id, completed)));
             } catch (err) {
                 return toToolError(err);
             }
@@ -114,7 +120,7 @@ export function registerWorkoutTools(server: McpServer) {
         { title: "Delete workout", description: "Delete a workout by id.", inputSchema: idShape },
         async ({ id }) => {
             try {
-                await workoutsApi.remove(id);
+                await services.workout.deleteWorkout(id);
                 return json({ deleted: true, id });
             } catch (err) {
                 return toToolError(err);

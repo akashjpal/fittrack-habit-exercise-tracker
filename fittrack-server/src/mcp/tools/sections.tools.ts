@@ -1,6 +1,8 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { sectionsApi } from "../api/sections.client.js";
-import { toToolError } from "../utils/errors.js";
+import type { McpContext, McpServices } from "../server";
+import { toToolError } from "../toolError";
+import { deepCamelToSnake, deepSnakeToCamel } from "../caseTransform";
+import { createSectionSchema, updateSectionSchema } from "../../shared/index";
 import {
     createSectionShape,
     createLibrarySectionShape,
@@ -8,19 +10,19 @@ import {
     idShape,
     weekRangeShape,
     libraryIdShape,
-} from "../schemas/section.schema.js";
+} from "../schemas/section.schema";
 
 function json(data: unknown) {
     return { content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] };
 }
 
-export function registerSectionTools(server: McpServer) {
+export function registerSectionTools(server: McpServer, ctx: McpContext, services: McpServices) {
     server.registerTool(
         "list_sections",
         { title: "List sections", description: "List all non-archived, non-library exercise sections for the current user." },
         async () => {
             try {
-                return json(await sectionsApi.list());
+                return json(deepSnakeToCamel(await services.section.getAllSections(ctx.userId)));
             } catch (err) {
                 return toToolError(err);
             }
@@ -32,7 +34,7 @@ export function registerSectionTools(server: McpServer) {
         { title: "Get section", description: "Get a single exercise section by id.", inputSchema: idShape },
         async ({ id }) => {
             try {
-                return json(await sectionsApi.getById(id));
+                return json(deepSnakeToCamel(await services.section.getSectionById(id)));
             } catch (err) {
                 return toToolError(err);
             }
@@ -48,7 +50,7 @@ export function registerSectionTools(server: McpServer) {
         },
         async ({ startDate, endDate }) => {
             try {
-                return json(await sectionsApi.listByWeek(startDate, endDate));
+                return json(deepSnakeToCamel(await services.section.getSectionsByWeek(ctx.userId, startDate, endDate)));
             } catch (err) {
                 return toToolError(err);
             }
@@ -60,7 +62,7 @@ export function registerSectionTools(server: McpServer) {
         { title: "List library sections", description: "List all reusable section templates (isLibrary: true)." },
         async () => {
             try {
-                return json(await sectionsApi.listLibrary());
+                return json(deepSnakeToCamel(await services.section.getLibrary(ctx.userId)));
             } catch (err) {
                 return toToolError(err);
             }
@@ -75,7 +77,7 @@ export function registerSectionTools(server: McpServer) {
         },
         async () => {
             try {
-                return json(await sectionsApi.listActiveLibrary());
+                return json(deepSnakeToCamel(await services.section.getActiveLibrary(ctx.userId)));
             } catch (err) {
                 return toToolError(err);
             }
@@ -91,7 +93,7 @@ export function registerSectionTools(server: McpServer) {
         },
         async ({ libraryId }) => {
             try {
-                return json(await sectionsApi.listByLibraryId(libraryId));
+                return json(deepSnakeToCamel(await services.section.getSectionsByLibraryId(libraryId)));
             } catch (err) {
                 return toToolError(err);
             }
@@ -108,7 +110,8 @@ export function registerSectionTools(server: McpServer) {
         },
         async (args) => {
             try {
-                return json(await sectionsApi.create(args));
+                const dto = createSectionSchema.parse(deepCamelToSnake(args));
+                return json(deepSnakeToCamel(await services.section.createSection(ctx.userId, dto)));
             } catch (err) {
                 return toToolError(err);
             }
@@ -124,7 +127,7 @@ export function registerSectionTools(server: McpServer) {
         },
         async ({ name }) => {
             try {
-                return json(await sectionsApi.createLibrary(name));
+                return json(deepSnakeToCamel(await services.section.createLibrarySection(ctx.userId, name)));
             } catch (err) {
                 return toToolError(err);
             }
@@ -140,7 +143,8 @@ export function registerSectionTools(server: McpServer) {
         },
         async ({ id, ...body }) => {
             try {
-                return json(await sectionsApi.update(id, body));
+                const dto = updateSectionSchema.parse(deepCamelToSnake(body));
+                return json(deepSnakeToCamel(await services.section.updateSection(id, dto)));
             } catch (err) {
                 return toToolError(err);
             }
@@ -156,7 +160,7 @@ export function registerSectionTools(server: McpServer) {
         },
         async ({ id }) => {
             try {
-                await sectionsApi.remove(id);
+                await services.section.deleteSection(id);
                 return json({ deleted: true, id });
             } catch (err) {
                 return toToolError(err);

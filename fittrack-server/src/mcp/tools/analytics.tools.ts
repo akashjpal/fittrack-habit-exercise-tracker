@@ -1,12 +1,13 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { analyticsApi } from "../api/analytics.client.js";
-import { toToolError } from "../utils/errors.js";
+import type { McpContext, McpServices } from "../server";
+import { toToolError } from "../toolError";
+import { deepSnakeToCamel } from "../caseTransform";
 
 function json(data: unknown) {
     return { content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] };
 }
 
-export function registerAnalyticsTools(server: McpServer) {
+export function registerAnalyticsTools(server: McpServer, ctx: McpContext, services: McpServices) {
     server.registerTool(
         "get_dashboard",
         {
@@ -16,7 +17,7 @@ export function registerAnalyticsTools(server: McpServer) {
         },
         async () => {
             try {
-                return json(await analyticsApi.getDashboard());
+                return json(deepSnakeToCamel(await services.analytics.getDashboard(ctx.userId)));
             } catch (err) {
                 return toToolError(err);
             }
@@ -31,7 +32,7 @@ export function registerAnalyticsTools(server: McpServer) {
         },
         async () => {
             try {
-                return json(await analyticsApi.getProgress());
+                return json(deepSnakeToCamel(await services.analytics.getProgress(ctx.userId)));
             } catch (err) {
                 return toToolError(err);
             }
