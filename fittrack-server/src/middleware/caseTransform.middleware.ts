@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 
-type JsonValue = string | number | boolean | null | JsonObject | JsonArray;
-interface JsonObject { [key: string]: JsonValue }
-type JsonArray = JsonValue[];
+export type JsonValue = string | number | boolean | null | JsonObject | JsonArray;
+export interface JsonObject { [key: string]: JsonValue }
+export type JsonArray = JsonValue[];
 
 function camelToSnake(str: string): string {
     return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
@@ -12,7 +12,7 @@ function snakeToCamel(str: string): string {
     return str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
 }
 
-function deepCamelToSnake(obj: JsonValue): JsonValue {
+export function deepCamelToSnake(obj: JsonValue): JsonValue {
     if (obj === null || typeof obj !== "object") return obj;
     if (Array.isArray(obj)) return obj.map(deepCamelToSnake);
     const result: JsonObject = {};
@@ -22,7 +22,7 @@ function deepCamelToSnake(obj: JsonValue): JsonValue {
     return result;
 }
 
-function deepSnakeToCamel(obj: JsonValue): JsonValue {
+export function deepSnakeToCamel(obj: JsonValue): JsonValue {
     if (obj === null || typeof obj !== "object") return obj;
     if (Array.isArray(obj)) return obj.map(deepSnakeToCamel);
     const result: JsonObject = {};

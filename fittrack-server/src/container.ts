@@ -36,5 +36,12 @@ export function bootstrap() {
         ai: new AIController(aiService),
     };
 
-    return { controllers };
+    const services = {
+        section: sectionService,
+        workout: workoutService,
+        habit: habitService,
+        analytics: analyticsService,
+    };
+
+    return { controllers, services };
 }
