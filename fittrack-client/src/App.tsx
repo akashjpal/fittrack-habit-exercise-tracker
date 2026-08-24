@@ -13,6 +13,7 @@ import SectionLibrary from "@/pages/SectionLibrary";
 import Landing from "@/pages/Landing";
 import Login from "@/pages/auth/Login";
 import Signup from "@/pages/auth/Signup";
+import OAuthAuthorize from "@/pages/auth/OAuthAuthorize";
 import ThemeToggle from "@/components/ThemeToggle";
 import { LayoutDashboard, Dumbbell, TrendingUp, Brain, Loader2, Library, Clock } from "lucide-react";
 import { AuthProvider, useAuth } from "./lib/auth";
@@ -43,6 +44,7 @@ function Router() {
       <Route path="/" component={Landing} />
       <Route path="/login" component={Login} />
       <Route path="/signup" component={Signup} />
+      <Route path="/oauth/authorize" component={OAuthAuthorize} />
 
       <ProtectedRoute path="/dashboard" component={Dashboard} />
       <ProtectedRoute path="/exercises" component={Exercises} />
@@ -60,7 +62,7 @@ function Navigation() {
   const [location] = useLocation();
   const { user, logout } = useAuth();
 
-  if (location === "/" || ["/login", "/signup"].includes(location)) {
+  if (location === "/" || ["/login", "/signup", "/oauth/authorize"].includes(location)) {
     return null;
   }
 
