@@ -1,12 +1,14 @@
 import { InsForgeSectionRepository } from "./repositories/insforge/section.repository";
 import { InsForgeWorkoutRepository } from "./repositories/insforge/workout.repository";
 import { InsForgeHabitRepository } from "./repositories/insforge/habit.repository";
+import { InsForgeOAuthRepository } from "./repositories/insforge/oauth.repository";
 
 import { SectionService } from "./services/section.service";
 import { WorkoutService } from "./services/workout.service";
 import { HabitService } from "./services/habit.service";
 import { AnalyticsService } from "./services/analytics.service";
 import { AIService } from "./services/ai.service";
+import { OAuthService } from "./services/oauth.service";
 
 import { SectionController } from "./controllers/section.controller";
 import { WorkoutController } from "./controllers/workout.controller";
@@ -19,6 +21,7 @@ export function bootstrap() {
     const sectionRepo = new InsForgeSectionRepository();
     const workoutRepo = new InsForgeWorkoutRepository();
     const habitRepo = new InsForgeHabitRepository();
+    const oauthRepo = new InsForgeOAuthRepository();
 
     // Services
     const sectionService = new SectionService(sectionRepo);
@@ -26,6 +29,7 @@ export function bootstrap() {
     const habitService = new HabitService(habitRepo);
     const analyticsService = new AnalyticsService(workoutRepo, sectionRepo, habitRepo);
     const aiService = new AIService(workoutRepo, sectionRepo, habitRepo);
+    const oauthService = new OAuthService(oauthRepo);
 
     // Controllers
     const controllers = {
@@ -41,6 +45,7 @@ export function bootstrap() {
         workout: workoutService,
         habit: habitService,
         analytics: analyticsService,
+        oauth: oauthService,
     };
 
     return { controllers, services };

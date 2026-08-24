@@ -8,6 +8,7 @@ import { errorMiddleware } from "./middleware/error.middleware";
 import { bootstrap } from "./container";
 import { createApiRouter } from "./routes/index";
 import { createMcpRouter } from "./mcp/route";
+import { createOAuthRouter, createOAuthMetadataRouter } from "./oauth/route";
 
 export function createApp() {
     const app = express();
@@ -36,6 +37,12 @@ export function createApp() {
 
     // MCP — tool handlers do their own case conversion, no REST middleware applies here
     app.use("/mcp", createMcpRouter(services));
+
+    // OAuth 2.1 authorization server (RFC 9728/8414/7591) — lets claude.ai's custom
+    // connector UI authenticate against /mcp. Wire format is standard OAuth snake_case,
+    // so caseTransformMiddleware does not apply here either.
+    app.use(createOAuthMetadataRouter());
+    app.use("/oauth", createOAuthRouter(services.oauth));
 
     // Error handling (must be last)
     app.use(errorMiddleware);
