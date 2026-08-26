@@ -69,10 +69,10 @@ function Navigation() {
   const links = [
     { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { path: "/exercises", label: "Exercises", icon: Dumbbell },
-    { path: "/library", label: "Library", icon: Library },
+    // { path: "/library", label: "Library", icon: Library },
     { path: "/history", label: "History", icon: Clock },
-    { path: "/progress", label: "Progress", icon: TrendingUp },
-    { path: "/ai-fit-check", label: "AI Fit Check", icon: Brain },
+    // { path: "/progress", label: "Progress", icon: TrendingUp },
+    // { path: "/ai-fit-check", label: "AI Fit Check", icon: Brain },
   ];
 
   return (
@@ -94,9 +94,8 @@ function Navigation() {
                     <Link
                       key={link.path}
                       href={link.path}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-colors hover-elevate ${
-                        isActive ? "text-foreground bg-muted" : "text-muted-foreground"
-                      }`}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-colors hover-elevate ${isActive ? "text-foreground bg-muted" : "text-muted-foreground"
+                        }`}
                     >
                       <Icon className="h-4 w-4" />
                       {link.label}
@@ -129,9 +128,8 @@ function Navigation() {
                 <Link
                   key={link.path}
                   href={link.path}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors hover-elevate ${
-                    isActive ? "text-foreground bg-muted" : "text-muted-foreground"
-                  }`}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors hover-elevate ${isActive ? "text-foreground bg-muted" : "text-muted-foreground"
+                    }`}
                 >
                   <Icon className="h-4 w-4" />
                   {link.label}
