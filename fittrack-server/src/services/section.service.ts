@@ -36,11 +36,11 @@ export class SectionService {
         return this.sectionRepo.createLibrary(userId, name);
     }
 
-    async updateSection(id: string, dto: UpdateSectionDto): Promise<ExerciseSectionRow> {
-        return this.sectionRepo.update(id, dto);
+    async updateSection(id: string, userId: string, dto: UpdateSectionDto): Promise<ExerciseSectionRow> {
+        return this.sectionRepo.update(id, userId, dto);
     }
 
-    async deleteSection(id: string): Promise<void> {
-        return this.sectionRepo.delete(id);
+    async deleteSection(id: string, userId: string): Promise<void> {
+        return this.sectionRepo.delete(id, userId);
     }
 }

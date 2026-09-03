@@ -117,7 +117,7 @@ export class InsForgeSectionRepository implements ISectionRepository {
         return data as ExerciseSectionRow;
     }
 
-    async update(id: string, dto: UpdateSectionDto): Promise<ExerciseSectionRow> {
+    async update(id: string, userId: string, dto: UpdateSectionDto): Promise<ExerciseSectionRow> {
         const updateData: Record<string, unknown> = {};
         if (dto.name !== undefined) updateData.name = dto.name;
         if (dto.target_sets !== undefined) updateData.target_sets = dto.target_sets;
@@ -127,19 +127,23 @@ export class InsForgeSectionRepository implements ISectionRepository {
             .from(this.table)
             .update(updateData)
             .eq("id", id)
+            .eq("user_id", userId)
             .select()
             .single();
 
-        if (error) throw AppError.internal(error.message);
+        if (error) throw AppError.notFound("Section not found");
         return data as ExerciseSectionRow;
     }
 
-    async delete(id: string): Promise<void> {
-        const { error } = await insforgeAdmin.database
+    async delete(id: string, userId: string): Promise<void> {
+        const { data, error } = await insforgeAdmin.database
             .from(this.table)
             .delete()
-            .eq("id", id);
+            .eq("id", id)
+            .eq("user_id", userId)
+            .select();
 
         if (error) throw AppError.internal(error.message);
+        if (!data || data.length === 0) throw AppError.notFound("Section not found");
     }
 }

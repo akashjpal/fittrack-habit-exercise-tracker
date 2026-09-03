@@ -82,16 +82,16 @@ describe("SectionService", () => {
         expect(repo.createLibrary).toHaveBeenCalledWith("u1", "Push Day");
     });
 
-    it("updateSection forwards id and partial dto", async () => {
+    it("updateSection forwards id, userId, and partial dto", async () => {
         const dto = { name: "Updated" };
         const updated = { id: "s1", name: "Updated" };
         (repo.update as any).mockResolvedValue(updated);
-        expect(await service.updateSection("s1", dto)).toBe(updated);
-        expect(repo.update).toHaveBeenCalledWith("s1", dto);
+        expect(await service.updateSection("s1", "u1", dto)).toBe(updated);
+        expect(repo.update).toHaveBeenCalledWith("s1", "u1", dto);
     });
 
-    it("deleteSection forwards the id", async () => {
-        await service.deleteSection("s1");
-        expect(repo.delete).toHaveBeenCalledWith("s1");
+    it("deleteSection forwards the id and userId", async () => {
+        await service.deleteSection("s1", "u1");
+        expect(repo.delete).toHaveBeenCalledWith("s1", "u1");
     });
 });

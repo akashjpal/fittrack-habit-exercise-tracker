@@ -89,24 +89,28 @@ export class InsForgeWorkoutRepository implements IWorkoutRepository {
         return data as WorkoutRow[];
     }
 
-    async updateStatus(id: string, completed: boolean): Promise<WorkoutRow> {
+    async updateStatus(id: string, userId: string, completed: boolean): Promise<WorkoutRow> {
         const { data, error } = await insforgeAdmin.database
             .from(this.table)
             .update({ completed })
             .eq("id", id)
+            .eq("user_id", userId)
             .select()
             .single();
 
-        if (error) throw AppError.internal(error.message);
+        if (error) throw AppError.notFound("Workout not found");
         return data as WorkoutRow;
     }
 
-    async delete(id: string): Promise<void> {
-        const { error } = await insforgeAdmin.database
+    async delete(id: string, userId: string): Promise<void> {
+        const { data, error } = await insforgeAdmin.database
             .from(this.table)
             .delete()
-            .eq("id", id);
+            .eq("id", id)
+            .eq("user_id", userId)
+            .select();
 
         if (error) throw AppError.internal(error.message);
+        if (!data || data.length === 0) throw AppError.notFound("Workout not found");
     }
 }

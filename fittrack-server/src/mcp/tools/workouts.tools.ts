@@ -108,7 +108,7 @@ export function registerWorkoutTools(server: McpServer, ctx: McpContext, service
         },
         async ({ id, completed }) => {
             try {
-                return json(deepSnakeToCamel(await services.workout.toggleWorkoutStatus(id, completed)));
+                return json(deepSnakeToCamel(await services.workout.toggleWorkoutStatus(id, ctx.userId, completed)));
             } catch (err) {
                 return toToolError(err);
             }
@@ -117,10 +117,10 @@ export function registerWorkoutTools(server: McpServer, ctx: McpContext, service
 
     server.registerTool(
         "delete_workout",
-        { title: "Delete workout", description: "Delete a workout by id.", inputSchema: idShape },
+        { title: "Delete workout", description: "Delete a workout by id. Only workouts owned by the current user can be deleted.", inputSchema: idShape },
         async ({ id }) => {
             try {
-                await services.workout.deleteWorkout(id);
+                await services.workout.deleteWorkout(id, ctx.userId);
                 return json({ deleted: true, id });
             } catch (err) {
                 return toToolError(err);

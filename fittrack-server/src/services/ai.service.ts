@@ -174,10 +174,10 @@ export class AIService {
             this.habitRepo.findAllCompletions(userId),
         ]);
 
-        // Filter to the last 3 weeks
-        const threeWeeksAgo = new Date();
-        threeWeeksAgo.setDate(threeWeeksAgo.getDate() - 90);
-        const cutoff = threeWeeksAgo.toISOString().slice(0, 10); // "YYYY-MM-DD"
+        // Filter to the last 3 months
+        const threeMonthsAgo = new Date();
+        threeMonthsAgo.setDate(threeMonthsAgo.getDate() - 90);
+        const cutoff = threeMonthsAgo.toISOString().slice(0, 10); // "YYYY-MM-DD"
 
         const recentWorkouts = workouts
             .filter((w) => w.date >= cutoff)
@@ -211,7 +211,7 @@ export class AIService {
                 date: c.date,
             }));
 
-        const systemPrompt = `You are a fitness coach AI. Analyze the user's workout and habit data from the last 3 weeks and provide personalized feedback. Respond ONLY with valid JSON in this exact format:
+        const systemPrompt = `You are a fitness coach AI. Analyze the user's workout and habit data from the last 3 months and provide personalized feedback. Respond ONLY with valid JSON in this exact format:
 {
   "motivation": "A brief motivational message",
   "strengths": ["strength 1", "strength 2", "strength 3"],
