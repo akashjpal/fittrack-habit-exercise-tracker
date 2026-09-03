@@ -70,8 +70,8 @@ function Navigation() {
     { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { path: "/exercises", label: "Exercises", icon: Dumbbell },
     // { path: "/library", label: "Library", icon: Library },
-    { path: "/history", label: "History", icon: Clock },
-    // { path: "/progress", label: "Progress", icon: TrendingUp },
+    // { path: "/history", label: "History", icon: Clock },
+    { path: "/progress", label: "Progress", icon: TrendingUp },
     // { path: "/ai-fit-check", label: "AI Fit Check", icon: Brain },
   ];
 

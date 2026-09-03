@@ -144,7 +144,7 @@ export function registerSectionTools(server: McpServer, ctx: McpContext, service
         async ({ id, ...body }) => {
             try {
                 const dto = updateSectionSchema.parse(deepCamelToSnake(body));
-                return json(deepSnakeToCamel(await services.section.updateSection(id, dto)));
+                return json(deepSnakeToCamel(await services.section.updateSection(id, ctx.userId, dto)));
             } catch (err) {
                 return toToolError(err);
             }
@@ -155,12 +155,12 @@ export function registerSectionTools(server: McpServer, ctx: McpContext, service
         "delete_section",
         {
             title: "Delete section",
-            description: "Delete a section by id. Note: the server does not check ownership, so any valid id works.",
+            description: "Delete a section by id. Only sections owned by the current user can be deleted.",
             inputSchema: idShape,
         },
         async ({ id }) => {
             try {
-                await services.section.deleteSection(id);
+                await services.section.deleteSection(id, ctx.userId);
                 return json({ deleted: true, id });
             } catch (err) {
                 return toToolError(err);

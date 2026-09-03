@@ -80,7 +80,7 @@ export class SectionController {
 
     update = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const section = await this.sectionService.updateSection(req.params.id, req.body);
+            const section = await this.sectionService.updateSection(req.params.id, req.userId, req.body);
             res.json(section);
         } catch (err) {
             next(err);
@@ -89,7 +89,7 @@ export class SectionController {
 
     delete = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
         try {
-            await this.sectionService.deleteSection(req.params.id);
+            await this.sectionService.deleteSection(req.params.id, req.userId);
             res.status(204).send();
         } catch (err) {
             next(err);

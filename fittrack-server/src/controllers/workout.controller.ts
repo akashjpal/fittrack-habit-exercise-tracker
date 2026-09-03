@@ -54,7 +54,7 @@ export class WorkoutController {
 
     toggleStatus = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const workout = await this.workoutService.toggleWorkoutStatus(req.params.id, req.body.completed);
+            const workout = await this.workoutService.toggleWorkoutStatus(req.params.id, req.userId, req.body.completed);
             res.json(workout);
         } catch (err) {
             next(err);
@@ -63,7 +63,7 @@ export class WorkoutController {
 
     delete = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
         try {
-            await this.workoutService.deleteWorkout(req.params.id);
+            await this.workoutService.deleteWorkout(req.params.id, req.userId);
             res.status(204).send();
         } catch (err) {
             next(err);
