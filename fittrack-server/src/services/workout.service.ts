@@ -28,11 +28,11 @@ export class WorkoutService {
         return this.workoutRepo.createBatch(userId, sectionId, workouts);
     }
 
-    async toggleWorkoutStatus(id: string, completed: boolean): Promise<WorkoutRow> {
-        return this.workoutRepo.updateStatus(id, completed);
+    async toggleWorkoutStatus(id: string, userId: string, completed: boolean): Promise<WorkoutRow> {
+        return this.workoutRepo.updateStatus(id, userId, completed);
     }
 
-    async deleteWorkout(id: string): Promise<void> {
-        return this.workoutRepo.delete(id);
+    async deleteWorkout(id: string, userId: string): Promise<void> {
+        return this.workoutRepo.delete(id, userId);
     }
 }

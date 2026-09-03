@@ -90,21 +90,21 @@ describe("WorkoutService", () => {
         expect(repo.createBatch).toHaveBeenCalledWith("u1", "s9", workouts);
     });
 
-    it("toggleWorkoutStatus forwards id and the new completed flag", async () => {
+    it("toggleWorkoutStatus forwards id, userId, and the new completed flag", async () => {
         const updated = makeRow({ completed: false });
         (repo.updateStatus as any).mockResolvedValue(updated);
 
-        const result = await service.toggleWorkoutStatus("w1", false);
+        const result = await service.toggleWorkoutStatus("w1", "u1", false);
 
-        expect(repo.updateStatus).toHaveBeenCalledWith("w1", false);
+        expect(repo.updateStatus).toHaveBeenCalledWith("w1", "u1", false);
         expect(result).toBe(updated);
     });
 
-    it("deleteWorkout forwards the id to the repo and resolves with no value", async () => {
+    it("deleteWorkout forwards the id and userId to the repo and resolves with no value", async () => {
         (repo.delete as any).mockResolvedValue(undefined);
 
-        await expect(service.deleteWorkout("w1")).resolves.toBeUndefined();
-        expect(repo.delete).toHaveBeenCalledWith("w1");
+        await expect(service.deleteWorkout("w1", "u1")).resolves.toBeUndefined();
+        expect(repo.delete).toHaveBeenCalledWith("w1", "u1");
     });
 
     it("propagates repo rejections instead of swallowing them", async () => {

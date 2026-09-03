@@ -82,6 +82,7 @@ describe("section MCP tools", () => {
 
         const result = await getHandler(server, "delete_section")({ id: "00000000-0000-0000-0000-000000000000" });
 
+        expect(services.section.deleteSection).toHaveBeenCalledWith("00000000-0000-0000-0000-000000000000", "user-1");
         expect(result.isError).toBe(true);
         expect(result.content[0].text).toBe("[NOT_FOUND] no such section");
     });

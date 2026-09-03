@@ -9,6 +9,6 @@ export interface ISectionRepository {
     findByLibraryId(libraryId: string): Promise<ExerciseSectionRow[]>;
     create(userId: string, dto: CreateSectionDto): Promise<ExerciseSectionRow>;
     createLibrary(userId: string, name: string): Promise<ExerciseSectionRow>;
-    update(id: string, dto: UpdateSectionDto): Promise<ExerciseSectionRow>;
-    delete(id: string): Promise<void>;
+    update(id: string, userId: string, dto: UpdateSectionDto): Promise<ExerciseSectionRow>;
+    delete(id: string, userId: string): Promise<void>;
 }
